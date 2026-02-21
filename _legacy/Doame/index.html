@@ -1,0 +1,48 @@
+
+<head>
+</head>
+<body>
+   
+    
+    <!-- Campo de texto -->
+    <input type="text" id="nome">
+    
+    <!-- Botão -->
+    <button onclick="">Próximo</button>
+
+     <!-- Mensagem de boas-vindas -->
+     <div class="mensagem" id="mensagem"></div>
+
+     <script>
+         // Função para salvar o nome no localStorage
+         function salvarNome() {
+             const nome = document.getElementById('nome').value;
+ 
+             if (nome) {
+                 // Salva o nome no localStorage
+                 localStorage.setItem('nomeUsuario', nome);
+ 
+                 // Exibe uma mensagem de boas-vindas
+                 exibirMensagem(nome);
+             } else {
+                 alert('Por favor, digite seu nome.');
+             }
+         }
+ 
+         // Função para exibir a mensagem de boas-vindas
+         function exibirMensagem(nome) {
+             const mensagemDiv = document.getElementById('mensagem');
+             mensagemDiv.textContent = `Olá, ${nome}! Bem-vindo(a) ao App de Doações.`;
+         }
+ 
+         // Verifica se já existe um nome salvo ao carregar a página
+         window.onload = function() {
+             const nomeSalvo = localStorage.getItem('nomeUsuario');
+             if (nomeSalvo) {
+                 exibirMensagem(nomeSalvo);
+             }
+         };
+     </script>
+
+</body>
+</html>
