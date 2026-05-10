@@ -1,0 +1,89 @@
+html, body {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/** {
+    box-sizing: border-box;
+  }*/
+  
+  body {
+    font-family: Arial, sans-serif;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 100vh;
+    overflow-y: auto; /* permite rolagem quando o conteúdo é maior que a viewport */
+    padding-top: 32px;
+    padding-bottom: 32px;
+    margin: 0;
+  }
+  
+  .form-wrapper {
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .step {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 100%;
+    opacity: 0;
+    transition: all 0.5s ease;
+  }
+  
+  .step.active {
+    left: 0;
+    opacity: 1;
+    position: relative;
+  }
+  
+  input, textarea, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+  
+  button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  button:hover {
+    background-color: #45a049;
+  }
+
+  input::placeholder {
+    color: #888;         /* muda a cor do texto fantasma */
+    opacity: 0.6;        /* controla a transparência */
+    font-style: italic;  /* deixa o texto em itálico */
+  }
+  h1{
+
+    text-align: center;
+  }
+  
+  img {
+    max-width: 320px; /* limita a largura da imagem */
+    width: 60%;
+    max-height: 40vh; /* limita a altura para não ultrapassar a tela */
+    object-fit: contain;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+    margin: 0 auto 20px auto; /* centraliza a imagem e adiciona espaço abaixo */
+  }

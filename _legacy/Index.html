@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.css" />
+    <!--  -->
+    <script src="script.js" defer></script>
+    <link rel="icon" type="image/png" href="doame_icon.svg" />
+    <title>Doame</title>
+  </head>
+
+  <body>
+    <div>
+      <img src="doame_logo.svg" alt="Descrição da Imagem" />
+    </div>
+
+    <div class="form-wrapper">
+      <form id="formulario">
+        <div class="step active" id="step1">
+          <h3>Como devemos te chamar?</h3>
+          <input type="text" name="nome" required />
+          <button type="button" class="next-btn" data-next="2">Próximo</button>
+        </div>
+
+        <div class="step" id="step2">
+          <h3>Informe qual é a sua série:</h3>
+          <label
+            >1ºAno<input
+              type="radio"
+              name="serie"
+              value="Ano1"
+              required
+            /> </label
+          ><br />
+          <label>2ºAno<input type="radio" name="serie" value="Ano2" /></label>
+          <label>3ºAno<input type="radio" name="serie" value="Ano3" /></label>
+          <label>4ºAno<input type="radio" name="serie" value="Ano4" /></label>
+          <label>5ºAno<input type="radio" name="serie" value="Ano5" /></label>
+          <label>6ºAno<input type="radio" name="serie" value="Ano6" /></label>
+          <label>7ºAno<input type="radio" name="serie" value="Ano7" /></label>
+          <label>8ºAno<input type="radio" name="serie" value="Ano8" /></label>
+          <label>9ºAno<input type="radio" name="serie" value="Ano9" /></label>
+          <button type="button" class="next-btn" data-next="3">Próximo</button>
+        </div>
+
+        <div class="step" id="step3">
+          <h3>Qual o nome da sua Equipe?</h3>
+          <input type="text" name="equipe" required />
+          <button type="button" class="next-btn" data-next="4">Próximo</button>
+        </div>
+
+        <div class="step" id="step4">
+          <h3>Quais são os nomes completos dos seus colégas de equipe?</h3>
+          <input
+            type="text"
+            name="teammate"
+            placeholder="Nome Obrigatório"
+            required
+          />
+          <input
+            type="text"
+            name="teammate"
+            placeholder="Nome Obrigatório"
+            required
+          />
+          <input type="text" name="teammate" />
+          <input type="text" name="teammate" />
+          <button type="button" class="next-btn" data-next="5">Próximo</button>
+        </div>
+
+        <div class="step" id="step5">
+          <h3>Diga 5 coisas que você gosta muito de fazer</h3>
+          <input
+            type="text"
+            name="favorite"
+            placeholder="1º Atividade Favorita"
+            required
+          />
+          <input
+            type="text"
+            name="favorite"
+            placeholder="2º Atividade Favorita"
+            required
+          />
+          <input
+            type="text"
+            name="favorite"
+            placeholder="3º Atividade Favorita"
+            required
+          />
+          <input
+            type="text"
+            name="favorite"
+            placeholder="4º Atividade Favorita"
+            required
+          />
+          <input
+            type="text"
+            name="favorite"
+            placeholder="5º Atividade Favorita"
+            required
+          />
+          <button type="button" class="next-btn" data-next="6">Próximo</button>
+        </div>
+
+        <div class="step" id="step6">
+          <h1>Projeto 1</h1>
+          <h3>Conte um projeto fácil que você gostaria muito de fazer</h3>
+          <input type="text" name="project" required />
+          <button type="button" class="next-btn" data-next="7">Próximo</button>
+        </div>
+
+        <div class="step" id="step7">
+          <h1>Projeto 1</h1>
+          <h3>Por que você gostaria muito de fazer esse projeto</h3>
+          <textarea name="pdetails" rows="4"></textarea><br />
+          <button type="button" class="next-btn" data-next="8">Próximo</button>
+        </div>
+
+        <div class="step" id="step8">
+          <h1>Projeto 1</h1>
+          <h3>Liste de 5 materiais que você precisa para fazer esse projeto</h3>
+          <input
+            type="text"
+            name="material"
+            placeholder="1º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="2º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="3º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="4º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="5º material"
+            required
+          />
+          <button type="button" class="next-btn" data-next="9">Próximo</button>
+        </div>
+
+        <div class="step" id="step9">
+          <h1>Projeto 2</h1>
+          <h3>Conte um projeto difícil que você gostaria muito de fazer</h3>
+          <input type="text" name="project" required />
+          <button type="button" class="next-btn" data-next="10">Próximo</button>
+        </div>
+
+        <div class="step" id="step10">
+          <h1>Projeto 2</h1>
+          <h3>Por que você gostaria muito de fazer esse projeto</h3>
+          <textarea name="pdetails" rows="4"></textarea><br />
+          <button type="button" class="next-btn" data-next="11">Próximo</button>
+        </div>
+
+        <div class="step" id="step11">
+          <h1>Projeto 2</h1>
+          <h3>Liste de 5 materiais que você precisa para fazer esse projeto</h3>
+          <input
+            type="text"
+            name="material"
+            placeholder="1º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="2º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="3º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="4º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="5º material"
+            required
+          />
+          <button type="button" class="next-btn" data-next="12">Próximo</button>
+        </div>
+
+        <div class="step" id="step12">
+          <h1>Projeto 3</h1>
+          <h3>
+            Conte um projeto muito difícil que você gostaria muito de fazer
+          </h3>
+          <input type="text" name="project" required />
+          <button type="button" class="next-btn" data-next="13">Próximo</button>
+        </div>
+
+        <div class="step" id="step13">
+          <h1>Projeto 3</h1>
+          <h3>Por que você gostaria muito de fazer esse projeto</h3>
+          <textarea name="pdetails" rows="4"></textarea><br />
+          <button type="button" class="next-btn" data-next="14">Próximo</button>
+        </div>
+
+        <div class="step" id="step14">
+          <h1>Projeto 3</h1>
+          <h3>Liste de 5 materiais que você precisa para fazer esse projeto</h3>
+          <input
+            type="text"
+            name="material"
+            placeholder="1º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="2º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="3º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="4º material"
+            required
+          />
+          <input
+            type="text"
+            name="material"
+            placeholder="5º material"
+            required
+          />
+          <button type="button" class="next-btn" data-next="15">Próximo</button>
+        </div>
+        <div class="step" id="step15">
+          <h1>Parabéns, você cadastrou os seus projetos!</h1>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
