@@ -504,6 +504,109 @@ O desenvolvedor optou pelo Painel Split-View (Abordagem 4) em detrimento da comb
 
 ---
 
+### Sessão 8 — 10/05/2026
+
+#### 🧠 Contexto
+Retomada com contexto compactado. O agente recebeu um resumo estruturado da sessão anterior e continuou a partir do ponto exato onde o trabalho havia parado. A sessão foi densa e cobriu três grandes blocos: (1) conclusão da integração backend, (2) mudança conceitual no modelo de voluntários, e (3) nova funcionalidade de preenchimento automático de endereço via CEP.
+
+#### 👤 O que foi solicitado
+
+**Bloco 1 — Conclusão da integração backend:**
+Continuação do trabalho iniciado na sessão anterior. A pendência era conectar login, envio de doação e busca de doações à API real.
+
+**Bloco 2 — Mudança de modelo do voluntário:**
+O desenvolvedor esclareceu que voluntários **não se auto-cadastram** no sistema. O fluxo correto é: voluntário comunica interesse fora do Doame → administrador cadastra os dados → sistema notifica o voluntário por SMS/WhatsApp sobre cada coleta. Com isso, **senha de voluntário é desnecessária** e foi removida do formulário e do backend.
+
+**Bloco 3 — Preenchimento automático de CEP:**
+Solicitação de implementação completa com os seguintes requisitos:
+- Backend como proxy para a ViaCEP (evitar CORS e centralizar cache futuro)
+- Frontend com hook reutilizável para os dois formulários (doação e voluntário)
+- Campos auto-preenchidos ficam desabilitados durante a busca e recebem fundo amarelo como indicador visual
+- Spinner de carregamento no campo CEP
+- Tratamento de erro inline abaixo do campo
+- Endereço do voluntário com a mesma estrutura separada de campos do formulário de doação
+
+#### 🤖 O que foi feito
+
+**Parte 1 — Correções de erros e integração backend (bloco de trabalho anterior ao contexto atual):**
+
+Antes da integração, foram corrigidos os seguintes erros identificados na API:
+- Conflito de rotas no `doacoes.controller.ts`: `GET :id` interceptava `GET :id/voluntarios-sugeridos` — corrigido por reordenação
+- Validadores ausentes em `CreateAdminDto` — adicionados decoradores `class-validator`
+- `@IsNumber()` ausente em `latitude/longitude` do `voluntarios.dto.ts`
+- Erro TypeScript `TS18047` em `VoluntarioDialog.tsx`: TypeScript não preserva narrowing em closures — corrigido com padrão `const voluntario = voluntarioOrNull` após guard
+
+**Parte 2 — Cinco funcionalidades implementadas:**
+
+| Funcionalidade | Descrição |
+|----------------|-----------|
+| Centralização mobile | Homepage centraliza logo e conteúdo em dispositivos móveis; alinha à direita em desktop |
+| Botão Voltar no StepHub | `StepHub.tsx` recebeu prop `onVoltar` e botão com ícone `ChevronLeft` |
+| Dark mode no admin | `AdminSidebar` recebeu props `darkMode` e `onToggleDark`; estado persistido em `localStorage` com chave `doame_dark_mode`; todos os componentes do dashboard receberam classes `dark:` do Tailwind |
+| Cadastro de novo voluntário | Criado `NovoVoluntarioDialog.tsx` com formulário completo e botão "Novo Voluntário" na aba Voluntários |
+| Integração backend — formulário | `StepContato.tsx` agora chama `POST /api/doacoes` via callback `onEnviar` assíncrono; mapeamento de `FormData` para `CreateDoacaoDto` feito no `page.tsx` da doação |
+| Integração backend — login | `login/page.tsx` substituiu credenciais hardcoded por chamada real a `POST /api/auth/login`; JWT armazenado em `localStorage` como `doame_admin_token` |
+| Integração backend — admin | `admin/page.tsx` busca doações reais via `GET /api/doacoes` com token JWT; função `mapApiDoacao()` converte resposta da API para o tipo `Doacao` do frontend |
+
+**Variáveis de ambiente adicionadas:**
+
+| Variável | Arquivo | Valor |
+|----------|---------|-------|
+| `NEXT_PUBLIC_IGREJA_ID` | `doame/apps/web/.env.local` e `.env.example` | `"igreja-itapetininga-01"` |
+
+**Parte 3 — Remoção da senha do voluntário:**
+
+Mudança de modelo confirmada pelo desenvolvedor. Voluntários não fazem login no Doame.
+
+| Item | O que mudou |
+|------|------------|
+| `doame/apps/api/prisma/schema.prisma` | `Voluntario.senhaHash String` → `String?` (nullable); `Doacao.latitude/longitude Float` → `Float?` (nullable) |
+| `doame/apps/api/src/voluntarios/voluntarios.dto.ts` | Campo `senha` removido do `CreateVoluntarioDto`; `MinLength` removido dos imports |
+| `doame/apps/api/src/voluntarios/voluntarios.service.ts` | Remoção de bcrypt hash na criação; remoção do import `bcryptjs` |
+| `doame/apps/api/src/doacoes/doacoes.dto.ts` | `latitude` e `longitude` marcados com `@IsOptional()` |
+| `doame/apps/web/src/app/(restricted)/admin/_components/NovoVoluntarioDialog.tsx` | Campo senha removido do formulário e da interface `NovoVoluntarioDados` |
+| `doame/apps/web/src/app/(restricted)/admin/page.tsx` | Campo `senha` removido do payload de criação |
+
+**Banco de dados:**
+
+- Database criado: `doamedb` em PostgreSQL local
+- Schema aplicado via `prisma db push` (advisory lock impediu `migrate dev` por processo concorrente)
+- Seed executado com sucesso: 1 igreja, 1 admin, 4 voluntários, 20 palavras bíblicas, 3 doações de exemplo
+
+**Parte 4 — Módulo CEP (backend + frontend):**
+
+#### ⚙️ Arquivos criados
+
+| Arquivo | Função |
+|---------|--------|
+| `doame/apps/api/src/cep/cep.service.ts` | Busca CEP na ViaCEP, valida 8 dígitos, normaliza resposta para `{ cep, logradouro, complemento, bairro, municipio, estado }` |
+| `doame/apps/api/src/cep/cep.controller.ts` | `GET /api/cep/:cep` — rota pública, sem JWT |
+| `doame/apps/api/src/cep/cep.module.ts` | Módulo NestJS registrado no `AppModule` |
+| `doame/apps/web/src/hooks/useCep.ts` | Hook reutilizável: aplica máscara `XXXXX-XXX`, dispara busca ao completar 8 dígitos, gerencia `carregando` e `erro`, chama `onPreenchido(dados)` |
+
+#### ⚙️ Arquivos modificados
+
+| Arquivo | O que mudou |
+|---------|-------------|
+| `doame/apps/api/src/app.module.ts` | `CepModule` adicionado aos imports |
+| `doame/apps/web/src/app/(main)/donation/_components/StepEndereco.tsx` | Reescrito: usa `useCep`, campos auto-preenchidos com fundo amarelo, spinner no CEP, erro inline, nova prop `onPreencherEndereco` para bulk update sem stale closure |
+| `doame/apps/web/src/app/(main)/donation/page.tsx` | Prop `onPreencherEndereco` adicionada com `setFormData(prev => ...)` para evitar stale closure no bulk update |
+| `doame/apps/web/src/app/(restricted)/admin/_components/NovoVoluntarioDialog.tsx` | `endereco: string` → objeto estruturado `EnderecoVoluntario` com 7 campos; mesma estrutura e UX de CEP do `StepEndereco` |
+| `doame/apps/web/src/app/(restricted)/admin/page.tsx` | `handleCadastrarVoluntario` serializa o objeto `endereco` para string `"Logradouro, N — Bairro, Cidade/UF"` antes de enviar à API; atualização local do estado usa campos individuais |
+
+#### 📌 Decisões tomadas
+
+- **Proxy no backend para ViaCEP**: evita CORS no browser, centraliza erros, permite cache e rate-limiting futuros sem alterar o frontend
+- **`onPreencherEndereco` como prop separada do `onChange`**: bulk update de múltiplos campos de endereço com `setFormData(prev => ...)` usa updater function e evita o problema de stale closure que ocorreria ao chamar `onChange` múltiplas vezes em sequência
+- **Campos auto-preenchidos editáveis após lookup**: desabilitados apenas durante a busca; editáveis depois para permitir correções manuais
+- **Fundo amarelo nos campos auto-preenchidos**: indicador visual sutil de que o campo foi preenchido automaticamente, mantendo consistência com a paleta de cores do projeto
+- **`senhaHash` mantido como nullable no schema** (não removido): permite migração futura para autenticação de voluntários sem migration destrutiva
+
+#### 📌 Raciocínio sobre stale closure
+Quando `onChange(campo, valor)` é chamado múltiplas vezes rapidamente (como em um bulk fill), cada chamada lê `formData.endereco` do momento do render — não do estado pós-atualização anterior. Resultado: apenas o último campo persiste. A solução foi criar `onPreencherEndereco(dados: Partial<Endereco>)` no orquestrador, implementado como `setFormData(prev => ({ ...prev, endereco: { ...prev.endereco, ...dados } }))`, que processa todas as mudanças em uma única transação de estado.
+
+---
+
 ## 4. Consolidação das Decisões
 
 ### Tecnologia
@@ -553,58 +656,71 @@ O desenvolvedor optou pelo Painel Split-View (Abordagem 4) em detrimento da comb
 ### ✅ Concluído
 
 **Front-end:**
-- Landing page (`doame/apps/web/src/app/page.tsx`)
-- Formulário de doação multi-step com 7 passos (`doame/apps/web/src/app/(main)/donation/`)
-- Redirecionamento para home após finalização da doação via `useRouter().push('/')` no `StepContato.tsx`
-- Página About refatorada com Shadcn/ui (`doame/apps/web/src/app/(marketing)/about/page.tsx`)
-- Página de login com credenciais hardcoded (`doame/apps/web/src/app/(restricted)/login/page.tsx`)
-- Dashboard administrativo com dados mockados (`doame/apps/web/src/app/(restricted)/admin/`):
-  - Aba **Doações**: lista com busca e filtro por status, dialog de detalhes, mudança de status, atribuição via `AtribuirDialog`
-  - Aba **Voluntários**: lista com busca, dialog com modos visualizar/editar/excluir e confirmação por senha de admin
-  - Aba **Atribuição**: painel split-view com lista filtrável à esquerda e voluntários sugeridos por proximidade à direita
+- Landing page centralizada em mobile (`doame/apps/web/src/app/page.tsx`)
+- Formulário de doação multi-step com 7 passos + botão Voltar no StepHub (`doame/apps/web/src/app/(main)/donation/`)
+- Formulário de endereço com preenchimento automático via CEP (`StepEndereco.tsx`)
+- Envio real de doação: `StepContato.tsx` chama `POST /api/doacoes` com mapeamento completo do `FormData`
+- Redirecionamento para home após envio bem-sucedido
+- Página About (`doame/apps/web/src/app/(marketing)/about/page.tsx`)
+- Login real com JWT: `login/page.tsx` chama `POST /api/auth/login`, armazena token em `localStorage`
+- Dashboard administrativo com **dark mode** persistido (`doame/apps/web/src/app/(restricted)/admin/`):
+  - Aba **Doações**: busca real via `GET /api/doacoes` com JWT; dialog de detalhes, mudança de status, atribuição
+  - Aba **Voluntários**: lista com busca, dialog visualizar/editar/excluir; botão **Novo Voluntário** com dialog de cadastro
+  - Aba **Atribuição**: painel split-view com lista filtrável e voluntários sugeridos por proximidade
+- Cadastro de voluntário com endereço estruturado e preenchimento via CEP (`NovoVoluntarioDialog.tsx`)
+- Hook `useCep` reutilizável (`doame/apps/web/src/hooks/useCep.ts`)
 
 **Back-end:**
 - Estrutura NestJS completa (`doame/apps/api/src/`)
-- Schema Prisma com todas as entidades (`doame/apps/api/prisma/schema.prisma`)
-- Migration inicial aplicada (`doame/apps/api/prisma/migrations/`)
-- Seed com dados de teste (`doame/apps/api/prisma/seed.ts`)
-- Módulos: auth, doacoes, voluntarios, administradores, palavras-chave
+- Todos os módulos funcionais: auth, doacoes, voluntarios, administradores, palavras-chave, **cep**
+- Schema Prisma atualizado: `senhaHash` opcional em Voluntario; `latitude/longitude` opcionais em Doacao
+- Banco `doamedb` criado e populado com seed
+- Módulo `CepModule`: proxy público para ViaCEP (`GET /api/cep/:cep`)
 
 **Infraestrutura:**
-- Monorepo configurado com Turborepo + pnpm (`doame/package.json`, `doame/pnpm-workspace.yaml`, `doame/turbo.json`)
-- Pacote compartilhado `@doame/shared` com tipos e enums (`doame/packages/shared/`)
+- Monorepo com Turborepo + pnpm
+- Pacote `@doame/shared`
+- Banco `doamedb` em PostgreSQL local
 
-### 🔄 Em andamento
+### 🔄 Parcialmente concluído
 
-- **Integração front-back**: o front-end ainda usa `mockData.ts` em vez de chamadas reais à API. Os pontos de integração estão marcados com `// TODO` nos arquivos do front.
+- **Integração front-back no dashboard**: doações são buscadas da API real. Voluntários, edição, exclusão e atribuição ainda usam `mockData.ts` e lógica local no frontend.
 
 ### ❌ Não iniciado (MVP)
 
-- Integração front-back completa (substituir `mockData.ts` por fetch real aos endpoints NestJS)
+- Busca real de voluntários via `GET /api/voluntarios` no dashboard
+- Edição/exclusão de voluntário via `PATCH/DELETE /api/voluntarios/:id` com `senhaAdmin`
+- Atribuição via `POST /api/doacoes/:id/atribuir`
+- Mudança de status via `PATCH /api/doacoes/:id/status`
 
 ---
 
 ## 6. Pendências e Próximos Passos
 
-### Pendências abertas (confirmadas)
+### Pendências abertas (MVP — integração restante)
 
-1. **Integração front-back completa**
-   - Substituir `mockData.ts` por chamadas `fetch` aos endpoints da API em todas as abas do dashboard
-   - Substituir callback vazio no `StepContato.tsx` por `POST /api/doacoes` real + manutenção do redirecionamento para `/`
-   - Atualizar `login/page.tsx` para usar `POST /api/auth/login` e armazenar o JWT retornado (em vez do flag no localStorage)
-   - Atualizar aba Doações para buscar via `GET /api/doacoes`
-   - Atualizar aba Voluntários para buscar via `GET /api/voluntarios`, editar via `PATCH /api/voluntarios/:id` e excluir via `DELETE /api/voluntarios/:id`
-   - Conectar Painel Split-View ao endpoint `GET /api/voluntarios/sugeridos?doacaoId=:id` no painel direito
-   - Conectar atribuição do Painel Split-View ao endpoint `POST /api/doacoes/:id/atribuir`
+1. **Aba Voluntários — busca real**
+   - `GET /api/voluntarios?igrejaId=...` com JWT para substituir `voluntariosMock`
+
+2. **Aba Voluntários — edição e exclusão**
+   - `PATCH /api/voluntarios/:id` com `{ ...form, senhaAdmin }` no body
+   - `DELETE /api/voluntarios/:id` com `{ senhaAdmin }` no body
+
+3. **Painel de Atribuição**
+   - `GET /api/doacoes/:id/voluntarios-sugeridos` para substituir `sugerirVoluntarios()` do mockData
+   - `POST /api/doacoes/:id/atribuir` com `{ voluntarioId }` para atribuição real
+
+4. **Mudança de status no DoacaoDialog**
+   - `PATCH /api/doacoes/:id/status` com `{ status }` para refletir mudanças no banco
 
 ### Pendências futuras (pós-MVP)
 
-- Substituir lista de `VoluntarioCard` no painel direito do split-view por mapa interativo (`react-leaflet` + PostGIS)
+- Substituir lista de voluntários no split-view por mapa interativo (`react-leaflet` + PostGIS)
+- Geocodificação de endereços via Nominatim (preencher `latitude/longitude` em Doacao e Voluntario)
 - Varredura automática de raios para sugestão de voluntários
 - Envio real de SMS/WhatsApp com palavra-passe bíblica na confirmação de coleta
-- Painel do voluntário (área autenticada separada)
+- Painel do voluntário (área autenticada separada, usando `senhaHash` já presente no schema)
 - Superadmin com gestão de múltiplas igrejas
-- Implementação do fluxo front-end da palavra-passe bíblica (schema do back já pronto)
 
 ---
 

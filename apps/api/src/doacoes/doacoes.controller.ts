@@ -14,19 +14,19 @@ export class DoacoesController {
     return this.doacoesService.findAll(igrejaId);
   }
 
-  // GET /api/doacoes/:id
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.doacoesService.findOne(id);
-  }
-
   // GET /api/doacoes/:id/voluntarios-sugeridos
   // Conecta com: AtribuirDialog.tsx → substituir sugerirVoluntarios() do mockData
   @UseGuards(JwtAuthGuard)
   @Get(':id/voluntarios-sugeridos')
   voluntariosSugeridos(@Param('id') id: string) {
     return this.doacoesService.voluntariosSugeridos(id);
+  }
+
+  // GET /api/doacoes/:id
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.doacoesService.findOne(id);
   }
 
   // POST /api/doacoes — rota PÚBLICA (doador não tem login)

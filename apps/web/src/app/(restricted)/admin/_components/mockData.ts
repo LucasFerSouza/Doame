@@ -332,8 +332,8 @@ export const doacoesMock: Doacao[] = [
 // Futuramente substituído por endpoint: GET /voluntarios/sugeridos?doacaoId=X
 // O backend fará isso via PostGIS. No MVP, simulamos a lógica no frontend.
 
-export function sugerirVoluntarios(doacao: Doacao): Voluntario[] {
-  const disponiveis = voluntariosMock.filter(
+export function sugerirVoluntarios(doacao: Doacao, voluntarios: Voluntario[] = voluntariosMock): Voluntario[] {
+  const disponiveis = voluntarios.filter(
     (v) => v.aprovado && v.ativo && v.disponivel
   );
 

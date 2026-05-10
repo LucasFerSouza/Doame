@@ -70,15 +70,15 @@ export function DoacoesList({ doacoes, onSelect }: DoacoesListProps) {
       </div>
 
       {/* Contador */}
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 dark:text-gray-500">
         {filtradas.length} doaç{filtradas.length !== 1 ? "ões" : "ão"}{" "}
         encontrada{filtradas.length !== 1 ? "s" : ""}
       </p>
 
       {/* Lista */}
       {filtradas.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <Package size={32} className="mx-auto mb-3 text-gray-200" />
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+          <Package size={32} className="mx-auto mb-3 text-gray-200 dark:text-gray-700" />
           <p className="text-sm">Nenhuma doação encontrada.</p>
         </div>
       ) : (
@@ -86,7 +86,7 @@ export function DoacoesList({ doacoes, onSelect }: DoacoesListProps) {
           {filtradas.map((doacao) => (
             <Card
               key={doacao.id}
-              className="cursor-pointer hover:border-yellow-300 hover:shadow-md transition-all duration-200 group"
+              className="cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-700 hover:shadow-md transition-all duration-200 group dark:bg-gray-800 dark:border-gray-700"
               onClick={() => onSelect(doacao)}
             >
               <CardContent className="p-4">
@@ -94,14 +94,14 @@ export function DoacoesList({ doacoes, onSelect }: DoacoesListProps) {
                   {/* Info principal */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="font-semibold text-gray-800 text-sm">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
                         {doacao.nomeDoador}
                       </p>
                       <StatusBadge status={doacao.status} />
                     </div>
 
                     {/* Endereço */}
-                    <div className="flex items-center gap-1 text-xs text-gray-400 mb-2">
+                    <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mb-2">
                       <MapPin size={11} />
                       <span className="truncate">
                         {doacao.endereco.bairro} ·{" "}
@@ -114,13 +114,13 @@ export function DoacoesList({ doacoes, onSelect }: DoacoesListProps) {
                       {doacao.itens.slice(0, 3).map((item, i) => (
                         <span
                           key={i}
-                          className="text-[11px] bg-gray-100 text-gray-600 rounded-full px-2 py-0.5"
+                          className="text-[11px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full px-2 py-0.5"
                         >
                           {item.nome} x{item.quantidade}
                         </span>
                       ))}
                       {doacao.itens.length > 3 && (
-                        <span className="text-[11px] text-gray-400">
+                        <span className="text-[11px] text-gray-400 dark:text-gray-500">
                           +{doacao.itens.length - 3} itens
                         </span>
                       )}
@@ -129,11 +129,11 @@ export function DoacoesList({ doacoes, onSelect }: DoacoesListProps) {
 
                   {/* Data e hora */}
                   <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                       <Calendar size={11} />
                       {doacao.dataColeta}
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                       <Clock size={11} />
                       {doacao.horaColeta}
                     </div>

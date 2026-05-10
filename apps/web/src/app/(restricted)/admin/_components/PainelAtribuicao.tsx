@@ -88,18 +88,18 @@ function MatchBadge({
 
   if (mesmoBairro)
     return (
-      <Badge className="bg-green-50 text-green-700 border border-green-200 text-[10px] gap-1 font-semibold px-1.5 py-0.5">
-        <Star size={9} className="fill-green-600" /> Mesmo bairro
+      <Badge className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 text-[10px] gap-1 font-semibold px-1.5 py-0.5">
+        <Star size={9} className="fill-green-600 dark:fill-green-400" /> Mesmo bairro
       </Badge>
     );
   if (mesmoMunicipio)
     return (
-      <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-semibold px-1.5 py-0.5">
+      <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-[10px] font-semibold px-1.5 py-0.5">
         Mesmo município
       </Badge>
     );
   return (
-    <Badge className="bg-gray-50 text-gray-400 border border-gray-200 text-[10px] font-semibold px-1.5 py-0.5">
+    <Badge className="bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 text-[10px] font-semibold px-1.5 py-0.5">
       Outro município
     </Badge>
   );
@@ -126,11 +126,11 @@ function DoacaoItem({ doacao, selecionada, atribuido, onClick }: DoacaoItemProps
     <button
       onClick={onClick}
       className={`
-        w-full text-left px-4 py-3.5 border-b last:border-b-0 transition-all duration-150
+        w-full text-left px-4 py-3.5 border-b dark:border-gray-700 last:border-b-0 transition-all duration-150
         ${
           selecionada
-            ? "bg-yellow-50 border-l-2 border-l-yellow-500"
-            : "hover:bg-gray-50 border-l-2 border-l-transparent"
+            ? "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-l-yellow-500"
+            : "hover:bg-gray-50 dark:hover:bg-gray-800 border-l-2 border-l-transparent"
         }
       `}
     >
@@ -139,18 +139,18 @@ function DoacaoItem({ doacao, selecionada, atribuido, onClick }: DoacaoItemProps
           {/* Nome + ícone de categoria */}
           <div className="flex items-center gap-1.5 mb-1">
             {iconeCategoria(doacao.itens)}
-            <span className="text-sm font-semibold text-gray-800 truncate">
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
               {doacao.nomeDoador}
             </span>
           </div>
 
           {/* Itens */}
-          <p className="text-xs text-gray-500 truncate mb-1.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-1.5">
             {totalItens} {totalItens === 1 ? "item" : "itens"} — {nomesCurtos}{resto}
           </p>
 
           {/* Endereço */}
-          <div className="flex items-center gap-1 text-gray-400">
+          <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
             <MapPin size={10} />
             <span className="text-[11px] truncate">
               {doacao.endereco.bairro}, {doacao.endereco.municipio}
@@ -158,7 +158,7 @@ function DoacaoItem({ doacao, selecionada, atribuido, onClick }: DoacaoItemProps
           </div>
 
           {/* Data e hora */}
-          <div className="flex items-center gap-3 mt-1 text-gray-400">
+          <div className="flex items-center gap-3 mt-1 text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1 text-[11px]">
               <Calendar size={10} />
               {doacao.dataColeta}
@@ -174,7 +174,7 @@ function DoacaoItem({ doacao, selecionada, atribuido, onClick }: DoacaoItemProps
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
           <StatusBadge status={doacao.status} />
           {atribuido && (
-            <span className="flex items-center gap-0.5 text-[10px] text-green-600 font-semibold">
+            <span className="flex items-center gap-0.5 text-[10px] text-green-600 dark:text-green-400 font-semibold">
               <CheckCircle2 size={10} />
               Atribuído
             </span>
@@ -212,16 +212,16 @@ function VoluntarioCard({
   return (
     <div
       className={`
-        flex items-center gap-3 border rounded-xl p-3.5 bg-white transition-all duration-150
+        flex items-center gap-3 border rounded-xl p-3.5 transition-all duration-150
         ${
           jaAtribuido
-            ? "border-green-300 bg-green-50"
-            : "hover:border-yellow-300 hover:shadow-sm"
+            ? "border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20"
+            : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-yellow-300 dark:hover:border-yellow-700 hover:shadow-sm"
         }
       `}
     >
       {/* Posição no ranking */}
-      <span className="text-xs font-bold text-gray-300 w-5 text-center flex-shrink-0">
+      <span className="text-xs font-bold text-gray-300 dark:text-gray-600 w-5 text-center flex-shrink-0">
         {index + 1}
       </span>
 
@@ -230,8 +230,8 @@ function VoluntarioCard({
         <AvatarFallback
           className={`text-xs font-bold ${
             jaAtribuido
-              ? "bg-green-200 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
+              ? "bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-300"
+              : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
           }`}
         >
           {iniciais(voluntario.nome)}
@@ -241,19 +241,19 @@ function VoluntarioCard({
       {/* Dados do voluntário */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-0.5">
-          <p className="text-sm font-semibold text-gray-800 truncate">
+          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
             {voluntario.nome}
           </p>
           <MatchBadge voluntario={voluntario} doacao={doacao} />
           {jaAtribuido && (
-            <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px] px-1.5 py-0.5">
+            <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-800 text-[10px] px-1.5 py-0.5">
               <CheckCircle2 size={9} className="mr-0.5" />
               Atual
             </Badge>
           )}
         </div>
 
-        <div className="flex items-center gap-1 text-gray-400">
+        <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
           <MapPin size={10} />
           <span className="text-[11px] truncate">
             {voluntario.endereco.bairro}, {voluntario.endereco.municipio}
@@ -261,16 +261,16 @@ function VoluntarioCard({
         </div>
 
         <div className="flex items-center gap-3 mt-0.5">
-          <span className="flex items-center gap-1 text-[11px] text-gray-400">
+          <span className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
             <Phone size={10} />
             {voluntario.telefone}
             {voluntario.whatsapp && (
-              <span className="text-green-600 font-medium ml-1">WhatsApp</span>
+              <span className="text-green-600 dark:text-green-400 font-medium ml-1">WhatsApp</span>
             )}
           </span>
         </div>
 
-        <p className="text-[11px] text-gray-400 mt-0.5">
+        <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
           {voluntario.totalColetas} coleta{voluntario.totalColetas !== 1 ? "s" : ""} realizadas
         </p>
       </div>
@@ -307,14 +307,14 @@ function VoluntarioCard({
 function PainelDireitoVazio() {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 text-center py-16 px-8">
-      <div className="w-16 h-16 rounded-full bg-yellow-50 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-full bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center">
         <Users size={28} className="text-yellow-400" />
       </div>
       <div>
-        <p className="text-sm font-semibold text-gray-600 mb-1">
+        <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-1">
           Selecione uma doação
         </p>
-        <p className="text-xs text-gray-400 leading-relaxed">
+        <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">
           Clique em qualquer doação na lista à esquerda para ver os voluntários
           sugeridos por proximidade.
         </p>
@@ -333,7 +333,7 @@ interface PainelAtribuicaoProps {
 
 export function PainelAtribuicao({
   doacoes,
-  voluntarios: _voluntarios,
+  voluntarios,
   onAtribuir,
 }: PainelAtribuicaoProps) {
   const [doacaoSelecionadaId, setDoacaoSelecionadaId] = useState<string | null>(null);
@@ -359,11 +359,10 @@ export function PainelAtribuicao({
   );
 
   // ── Voluntários sugeridos para a doação selecionada ─────────────────────
-  // TODO: substituir por GET /api/voluntarios/sugeridos?doacaoId=:id
   const sugeridos = useMemo(() => {
     if (!doacaoSelecionada) return [];
-    return sugerirVoluntarios(doacaoSelecionada);
-  }, [doacaoSelecionada]);
+    return sugerirVoluntarios(doacaoSelecionada, voluntarios);
+  }, [doacaoSelecionada, voluntarios]);
 
   // ── Handler de atribuição ────────────────────────────────────────────────
   const handleAtribuir = (voluntarioId: string) => {
@@ -381,27 +380,27 @@ export function PainelAtribuicao({
     <div className="flex flex-col h-full">
       {/* ── Header com métricas ─────────────────────────────────────────── */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-800">Painel de Atribuição</h1>
-        <p className="text-sm text-gray-400 mt-0.5">
+        <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">Painel de Atribuição</h1>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
           Clique em uma doação para ver os voluntários mais próximos em tempo real.
         </p>
         <div className="flex items-center gap-4 mt-3">
           <div className="flex items-center gap-2 text-sm">
             <span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />
-            <span className="text-gray-500">
-              <span className="font-bold text-gray-700">{totalPendentes}</span> pendentes
+            <span className="text-gray-500 dark:text-gray-400">
+              <span className="font-bold text-gray-700 dark:text-gray-200">{totalPendentes}</span> pendentes
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-            <span className="text-gray-500">
-              <span className="font-bold text-gray-700">{totalAtribuidos}</span> com voluntário
+            <span className="text-gray-500 dark:text-gray-400">
+              <span className="font-bold text-gray-700 dark:text-gray-200">{totalAtribuidos}</span> com voluntário
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" />
-            <span className="text-gray-500">
-              <span className="font-bold text-gray-700">{doacoes.length}</span> total
+            <span className="text-gray-500 dark:text-gray-400">
+              <span className="font-bold text-gray-700 dark:text-gray-200">{doacoes.length}</span> total
             </span>
           </div>
         </div>
@@ -411,9 +410,9 @@ export function PainelAtribuicao({
       <div className="flex gap-5 flex-1 min-h-0">
 
         {/* ── Painel esquerdo: lista de doações ─────────────────────────── */}
-        <div className="w-[380px] flex-shrink-0 flex flex-col border rounded-xl bg-white overflow-hidden shadow-sm">
+        <div className="w-[380px] flex-shrink-0 flex flex-col border dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 overflow-hidden shadow-sm">
           {/* Filtros */}
-          <div className="p-3 border-b space-y-2">
+          <div className="p-3 border-b dark:border-gray-700 space-y-2">
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
@@ -446,8 +445,8 @@ export function PainelAtribuicao({
           {/* Lista de doações */}
           <div className="flex-1 overflow-y-auto">
             {doacoesFiltradas.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center text-gray-400 px-4">
-                <AlertCircle size={24} className="text-gray-300" />
+              <div className="flex flex-col items-center gap-2 py-12 text-center text-gray-400 dark:text-gray-500 px-4">
+                <AlertCircle size={24} className="text-gray-300 dark:text-gray-600" />
                 <p className="text-sm">Nenhuma doação encontrada.</p>
               </div>
             ) : (
@@ -468,35 +467,35 @@ export function PainelAtribuicao({
           </div>
 
           {/* Footer contador */}
-          <div className="border-t px-4 py-2 bg-gray-50">
-            <p className="text-[11px] text-gray-400">
+          <div className="border-t dark:border-gray-700 px-4 py-2 bg-gray-50 dark:bg-gray-800/50">
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">
               {doacoesFiltradas.length} de {doacoes.length} doações
             </p>
           </div>
         </div>
 
         {/* ── Painel direito: voluntários sugeridos ─────────────────────── */}
-        <div className="flex-1 flex flex-col border rounded-xl bg-white overflow-hidden shadow-sm">
+        <div className="flex-1 flex flex-col border dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 overflow-hidden shadow-sm">
           {doacaoSelecionada ? (
             <>
               {/* Header do painel direito */}
-              <div className="p-4 border-b">
+              <div className="p-4 border-b dark:border-gray-700">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <UserCheck size={15} className="text-yellow-600 flex-shrink-0" />
-                      <p className="text-sm font-bold text-gray-800">
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
                         Voluntários para {doacaoSelecionada.nomeDoador}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-400 mb-0.5">
+                    <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 mb-0.5">
                       <MapPin size={11} />
                       <span className="text-xs">
                         {doacaoSelecionada.endereco.bairro} —{" "}
                         {doacaoSelecionada.endereco.municipio}
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500">
                       Ordenados por proximidade ao endereço de coleta
                     </p>
                   </div>
@@ -508,7 +507,7 @@ export function PainelAtribuicao({
                   {doacaoSelecionada.itens.map((item, i) => (
                     <span
                       key={i}
-                      className="inline-flex items-center gap-1 text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
+                      className="inline-flex items-center gap-1 text-[11px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full"
                     >
                       {iconeCategoria([item])}
                       {item.quantidade}× {item.nome}
@@ -522,10 +521,10 @@ export function PainelAtribuicao({
               {/* Lista de voluntários sugeridos */}
               <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
                 {sugeridos.length === 0 ? (
-                  <div className="flex flex-col items-center gap-3 py-12 text-center text-gray-400">
-                    <AlertCircle size={28} className="text-gray-300" />
+                  <div className="flex flex-col items-center gap-3 py-12 text-center text-gray-400 dark:text-gray-500">
+                    <AlertCircle size={28} className="text-gray-300 dark:text-gray-600" />
                     <div>
-                      <p className="text-sm font-medium text-gray-500">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Nenhum voluntário disponível
                       </p>
                       <p className="text-xs mt-1">
@@ -548,14 +547,14 @@ export function PainelAtribuicao({
               </div>
 
               {/* Footer com legenda */}
-              <div className="border-t px-4 py-2.5 bg-gray-50">
-                <div className="flex items-center gap-4 text-[11px] text-gray-400">
+              <div className="border-t dark:border-gray-700 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center gap-4 text-[11px] text-gray-400 dark:text-gray-500">
                   <span className="flex items-center gap-1">
-                    <Star size={10} className="fill-green-600 text-green-600" />
+                    <Star size={10} className="fill-green-600 dark:fill-green-400 text-green-600 dark:text-green-400" />
                     Mesmo bairro — melhor match
                   </span>
                   <span>·</span>
-                  <span className="text-blue-500 font-medium">Mesmo município</span>
+                  <span className="text-blue-500 dark:text-blue-400 font-medium">Mesmo município</span>
                   <span>·</span>
                   <span>Outro município</span>
                 </div>

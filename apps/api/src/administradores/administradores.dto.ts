@@ -1,10 +1,21 @@
+import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 import { PapelAdmin } from '@prisma/client';
 
-// No arquivo administradores.dto.ts
 export class CreateAdminDto {
+  @IsString()
   nome: string;
+
+  @IsEmail()
   email: string;
+
+  @IsString()
+  @MinLength(6)
   senha: string;
-  papel?: PapelAdmin; // Mude de string para PapelAdmin
+
+  @IsOptional()
+  @IsEnum(PapelAdmin)
+  papel?: PapelAdmin;
+
+  @IsString()
   igrejaId: string;
 }

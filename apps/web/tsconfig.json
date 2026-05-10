@@ -13,13 +13,11 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "ignoreDeprecations": "5.0",
-    "baseUrl": "src",
     "plugins": [
       {
         "name": "next"
@@ -27,28 +25,28 @@
     ],
     "paths": {
       "@/*": [
-        "*"
+        "./src/*"
       ],
       "@/components/*": [
-        "components/*"
+        "./src/components/*"
       ],
       "@/components/(marketing)/*": [
-        "components/(marketing)/*"
+        "./src/components/(marketing)/*"
       ],
       "@/config/*": [
-        "config/*"
+        "./src/config/*"
       ],
       "@/data/*": [
-        "data/*"
+        "./src/data/*"
       ],
       "@/hooks/*": [
-        "hooks/*"
+        "./src/hooks/*"
       ],
       "@/lib/*": [
-        "lib/*"
+        "./src/lib/*"
       ],
       "@/types/*": [
-        "types/*"
+        "./src/types/*"
       ]
     }
   },

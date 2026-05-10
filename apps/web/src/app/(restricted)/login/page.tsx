@@ -9,14 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Credenciais hardcoded para o MVP.
-// Substituição futura: remover estas constantes e chamar
-//   POST /auth/login → { access_token }
-// armazenando o JWT retornado no lugar da flag.
-// ─────────────────────────────────────────────────────────────────────────────
-const ADMIN_EMAIL = "admin@doame.com";
-const ADMIN_SENHA = "doame2025";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,20 +19,28 @@ export default function LoginPage() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setErro("");
     setCarregando(true);
-
-    // Simula latência de rede para UX realista
-    setTimeout(() => {
-      if (email === ADMIN_EMAIL && senha === ADMIN_SENHA) {
-        localStorage.setItem("doame_admin_logado", "true");
-        router.replace("/admin");
-      } else {
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
+      });
+      if (!res.ok) {
         setErro("E-mail ou senha incorretos.");
-        setCarregando(false);
+        return;
       }
-    }, 600);
+      const { access_token } = await res.json();
+      localStorage.setItem("doame_admin_logado", "true");
+      localStorage.setItem("doame_admin_token", access_token);
+      router.replace("/admin");
+    } catch {
+      setErro("Não foi possível conectar ao servidor.");
+    } finally {
+      setCarregando(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

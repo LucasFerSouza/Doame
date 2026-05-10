@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
-    <section className="relative w-full min-h-screen flex flex-col items-end pr-36 overflow-hidden">
+    <section className="relative w-full min-h-screen flex flex-col items-center md:items-end md:pr-36 overflow-hidden">
       <Link href="/login" className="fixed top-6 right-10 z-20 ">
         <Button className="w-40 bg-white text-lg font-semibold text-yellow-600 hover:bg-yellow-600 hover:text-white border-2 border-yellow-600 rounded-4xl">
           Acesso Restrito
@@ -20,7 +20,7 @@ export default function Home() {
         />
         {/* Logo e Texto */}
 
-        <div className="relative z-10 max-w-100 flex flex-col items-center">
+        <div className="relative z-10 w-full max-w-xs md:max-w-100 flex flex-col items-center px-6 md:px-0">
           <Image
             src="/Isologo.svg"
             alt="Isologo MeuPet"

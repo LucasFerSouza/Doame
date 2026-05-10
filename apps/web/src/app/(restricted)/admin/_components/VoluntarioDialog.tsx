@@ -23,6 +23,7 @@ import {
   EyeOff,
   AlertTriangle,
   CheckCircle2,
+  UserCheck,
 } from "lucide-react";
 import { Voluntario } from "./mockData";
 
@@ -30,15 +31,22 @@ import { Voluntario } from "./mockData";
 // Tipos
 // ─────────────────────────────────────────────────────────────────────────────
 
-type Modo = "visualizar" | "editar" | "excluir";
+type Modo = "visualizar" | "editar" | "excluir" | "aprovar";
 
 interface VoluntarioDialogProps {
   voluntario: Voluntario | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Callbacks para o orquestrador — TODO: substituir por chamadas à API
-  onEditar: (id: string, dados: Partial<Voluntario>, senhaAdmin: string) => Promise<{ ok: boolean; erro?: string }>;
-  onExcluir: (id: string, senhaAdmin: string) => Promise<{ ok: boolean; erro?: string }>;
+  onEditar: (
+    id: string,
+    dados: Partial<Voluntario>,
+    senhaAdmin: string,
+  ) => Promise<{ ok: boolean; erro?: string }>;
+  onExcluir: (
+    id: string,
+    senhaAdmin: string,
+  ) => Promise<{ ok: boolean; erro?: string }>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -59,7 +67,7 @@ function iniciais(nome: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function VoluntarioDialog({
-  voluntario,
+  voluntario: voluntarioOrNull,
   open,
   onOpenChange,
   onEditar,
@@ -82,18 +90,20 @@ export function VoluntarioDialog({
 
   // Reseta tudo ao abrir/fechar ou trocar voluntário
   useEffect(() => {
-    if (open && voluntario) {
+    if (open && voluntarioOrNull) {
       setModo("visualizar");
-      setForm({ ...voluntario });
+      setForm({ ...voluntarioOrNull });
       setSenhaAdmin("");
       setMostrarSenha(false);
       setErroSenha("");
       setSucesso(false);
       setCarregando(false);
     }
-  }, [open, voluntario]);
+  }, [open, voluntarioOrNull]);
 
-  if (!voluntario) return null;
+  if (!voluntarioOrNull) return null;
+  // const narrowado para que closures internas enxerguem Voluntario (não null)
+  const voluntario = voluntarioOrNull;
 
   // ─────────────────────────────────────────────────────────────────────────
   // Handlers
@@ -105,7 +115,10 @@ export function VoluntarioDialog({
       const subCampo = campo.replace("endereco.", "");
       setForm((prev) => ({
         ...prev,
-        endereco: { ...(prev.endereco ?? voluntario.endereco), [subCampo]: valor },
+        endereco: {
+          ...(prev.endereco ?? voluntario.endereco),
+          [subCampo]: valor,
+        },
       }));
     } else {
       setForm((prev) => ({ ...prev, [campo]: valor }));
@@ -156,7 +169,8 @@ export function VoluntarioDialog({
     return (
       <div className="flex flex-col gap-2 pt-2">
         <p className="text-xs text-gray-500">
-          Confirme com a <strong>senha do administrador</strong> para {labelAcao}.
+          Confirme com a <strong>senha do administrador</strong> para{" "}
+          {labelAcao}.
         </p>
         <div className="relative">
           <Input
@@ -177,9 +191,7 @@ export function VoluntarioDialog({
             {mostrarSenha ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         </div>
-        {erroSenha && (
-          <p className="text-xs text-red-500">{erroSenha}</p>
-        )}
+        {erroSenha && <p className="text-xs text-red-500">{erroSenha}</p>}
       </div>
     );
   }
@@ -190,13 +202,17 @@ export function VoluntarioDialog({
       <>
         <Separator />
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Contato</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Contato
+          </p>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <Phone size={13} className="text-gray-400" />
               {voluntario.telefone}
               {voluntario.whatsapp && (
-                <span className="text-[11px] text-green-600 font-semibold">WhatsApp</span>
+                <span className="text-[11px] text-green-600 font-semibold">
+                  WhatsApp
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -207,26 +223,34 @@ export function VoluntarioDialog({
         </div>
         <Separator />
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Endereço
+          </p>
           <div className="flex items-start gap-2 text-sm text-gray-700">
-            <MapPin size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
+            <MapPin size={13} className="text-gray-400 mt-0.5 shrink-0" />
             <span>
               {voluntario.endereco.logradouro}, {voluntario.endereco.numero}
               <br />
-              {voluntario.endereco.bairro} · {voluntario.endereco.municipio}/{voluntario.endereco.estado}
+              {voluntario.endereco.bairro} · {voluntario.endereco.municipio}/
+              {voluntario.endereco.estado}
               <br />
-              <span className="text-gray-400 text-xs">CEP {voluntario.endereco.cep}</span>
+              <span className="text-gray-400 text-xs">
+                CEP {voluntario.endereco.cep}
+              </span>
             </span>
           </div>
         </div>
         <Separator />
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Histórico</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Histórico
+          </p>
           <div className="flex items-center gap-2 text-sm text-gray-700">
             <Award size={13} className="text-yellow-500" />
             <span>
-              <strong>{voluntario.totalColetas}</strong> coleta{voluntario.totalColetas !== 1 ? "s" : ""}{" "}
-              realizada{voluntario.totalColetas !== 1 ? "s" : ""}
+              <strong>{voluntario.totalColetas}</strong> coleta
+              {voluntario.totalColetas !== 1 ? "s" : ""} realizada
+              {voluntario.totalColetas !== 1 ? "s" : ""}
             </span>
           </div>
         </div>
@@ -241,21 +265,33 @@ export function VoluntarioDialog({
       <>
         <Separator />
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dados pessoais</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Dados pessoais
+          </p>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500">Nome completo</label>
-            <Input value={form.nome ?? voluntario.nome} onChange={(e) => handleCampoForm("nome", e.target.value)} className="text-sm" />
+            <Input
+              value={form.nome ?? voluntario.nome}
+              onChange={(e) => handleCampoForm("nome", e.target.value)}
+              className="text-sm"
+            />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">Telefone</label>
-              <Input value={form.telefone ?? voluntario.telefone} onChange={(e) => handleCampoForm("telefone", e.target.value)} className="text-sm" />
+              <Input
+                value={form.telefone ?? voluntario.telefone}
+                onChange={(e) => handleCampoForm("telefone", e.target.value)}
+                className="text-sm"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">WhatsApp?</label>
               <select
                 value={String(form.whatsapp ?? voluntario.whatsapp)}
-                onChange={(e) => handleCampoForm("whatsapp", e.target.value === "true")}
+                onChange={(e) =>
+                  handleCampoForm("whatsapp", e.target.value === "true")
+                }
                 className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white"
               >
                 <option value="true">Sim</option>
@@ -265,14 +301,21 @@ export function VoluntarioDialog({
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs text-gray-500">E-mail</label>
-            <Input type="email" value={form.email ?? voluntario.email} onChange={(e) => handleCampoForm("email", e.target.value)} className="text-sm" />
+            <Input
+              type="email"
+              value={voluntario.email}
+              readOnly
+              className="text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+            />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">Disponível?</label>
               <select
                 value={String(form.disponivel ?? voluntario.disponivel)}
-                onChange={(e) => handleCampoForm("disponivel", e.target.value === "true")}
+                onChange={(e) =>
+                  handleCampoForm("disponivel", e.target.value === "true")
+                }
                 className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white"
               >
                 <option value="true">Sim</option>
@@ -283,7 +326,9 @@ export function VoluntarioDialog({
               <label className="text-xs text-gray-500">Aprovado?</label>
               <select
                 value={String(form.aprovado ?? voluntario.aprovado)}
-                onChange={(e) => handleCampoForm("aprovado", e.target.value === "true")}
+                onChange={(e) =>
+                  handleCampoForm("aprovado", e.target.value === "true")
+                }
                 className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 bg-white"
               >
                 <option value="true">Sim</option>
@@ -294,46 +339,156 @@ export function VoluntarioDialog({
         </div>
         <Separator />
         <div className="flex flex-col gap-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Endereço</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Endereço
+          </p>
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2 flex flex-col gap-1">
               <label className="text-xs text-gray-500">Logradouro</label>
-              <Input value={end.logradouro} onChange={(e) => handleCampoForm("endereco.logradouro", e.target.value)} className="text-sm" />
+              <Input
+                value={end.logradouro}
+                onChange={(e) =>
+                  handleCampoForm("endereco.logradouro", e.target.value)
+                }
+                className="text-sm"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">Número</label>
-              <Input value={end.numero} onChange={(e) => handleCampoForm("endereco.numero", e.target.value)} className="text-sm" />
+              <Input
+                value={end.numero}
+                onChange={(e) =>
+                  handleCampoForm("endereco.numero", e.target.value)
+                }
+                className="text-sm"
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">Bairro</label>
-              <Input value={end.bairro} onChange={(e) => handleCampoForm("endereco.bairro", e.target.value)} className="text-sm" />
+              <Input
+                value={end.bairro}
+                onChange={(e) =>
+                  handleCampoForm("endereco.bairro", e.target.value)
+                }
+                className="text-sm"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">Município</label>
-              <Input value={end.municipio} onChange={(e) => handleCampoForm("endereco.municipio", e.target.value)} className="text-sm" />
+              <Input
+                value={end.municipio}
+                onChange={(e) =>
+                  handleCampoForm("endereco.municipio", e.target.value)
+                }
+                className="text-sm"
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">Estado (UF)</label>
-              <Input value={end.estado} maxLength={2} onChange={(e) => handleCampoForm("endereco.estado", e.target.value.toUpperCase())} className="text-sm" />
+              <Input
+                value={end.estado}
+                maxLength={2}
+                onChange={(e) =>
+                  handleCampoForm(
+                    "endereco.estado",
+                    e.target.value.toUpperCase(),
+                  )
+                }
+                className="text-sm"
+              />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-500">CEP</label>
-              <Input value={end.cep} onChange={(e) => handleCampoForm("endereco.cep", e.target.value)} className="text-sm" />
+              <Input
+                value={end.cep}
+                onChange={(e) =>
+                  handleCampoForm("endereco.cep", e.target.value)
+                }
+                className="text-sm"
+              />
             </div>
           </div>
         </div>
         <Separator />
         {renderCampoSenha("salvar as alterações")}
         <div className="flex gap-2 pt-1">
-          <Button variant="outline" className="flex-1" onClick={() => setModo("visualizar")} disabled={carregando}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => setModo("visualizar")}
+            disabled={carregando}
+          >
             Cancelar
           </Button>
-          <Button className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white" onClick={handleSalvarEdicao} disabled={carregando}>
+          <Button
+            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
+            onClick={handleSalvarEdicao}
+            disabled={carregando}
+          >
             {carregando ? "Salvando..." : "Salvar alterações"}
+          </Button>
+        </div>
+      </>
+    );
+  }
+
+  // ── Modo: APROVAR ──
+  async function handleConfirmarAprovacao() {
+    if (!senhaAdmin) {
+      setErroSenha("Informe a senha do administrador para confirmar.");
+      return;
+    }
+    setCarregando(true);
+    setErroSenha("");
+    const resultado = await onEditar(
+      voluntario.id,
+      { aprovado: true, disponivel: true },
+      senhaAdmin,
+    );
+    setCarregando(false);
+    if (!resultado.ok) {
+      setErroSenha(resultado.erro ?? "Senha incorreta. Tente novamente.");
+      return;
+    }
+    setSucesso(true);
+    setTimeout(() => onOpenChange(false), 1200);
+  }
+
+  function renderAprovar() {
+    return (
+      <>
+        <Separator />
+        <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-3">
+          <UserCheck size={16} className="text-green-600 mt-0.5 shrink-0" />
+          <div className="text-sm text-green-800">
+            <p className="font-semibold mb-1">Aprovar voluntário</p>
+            <p className="text-xs leading-relaxed">
+              <strong>{voluntario.nome}</strong> será marcado como{" "}
+              <strong>aprovado e disponível</strong>, podendo ser atribuído a
+              coletas.
+            </p>
+          </div>
+        </div>
+        {renderCampoSenha("aprovar o voluntário")}
+        <div className="flex gap-2 pt-1">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => setModo("visualizar")}
+            disabled={carregando}
+          >
+            Cancelar
+          </Button>
+          <Button
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+            onClick={handleConfirmarAprovacao}
+            disabled={carregando}
+          >
+            {carregando ? "Aprovando..." : "Confirmar aprovação"}
           </Button>
         </div>
       </>
@@ -346,22 +501,32 @@ export function VoluntarioDialog({
       <>
         <Separator />
         <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-lg p-3">
-          <AlertTriangle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+          <AlertTriangle size={16} className="text-red-500 mt-0.5 shrink-0" />
           <div className="text-sm text-red-700">
             <p className="font-semibold mb-1">Atenção: ação irreversível</p>
             <p className="text-xs leading-relaxed">
               O voluntário <strong>{voluntario.nome}</strong> será{" "}
-              <strong>desativado</strong> do sistema (soft delete). Seu histórico de coletas
-              será preservado, mas ele não aparecerá mais nas sugestões de atribuição.
+              <strong>desativado</strong> do sistema (soft delete). Seu
+              histórico de coletas será preservado, mas ele não aparecerá mais
+              nas sugestões de atribuição.
             </p>
           </div>
         </div>
         {renderCampoSenha("confirmar a exclusão")}
         <div className="flex gap-2 pt-1">
-          <Button variant="outline" className="flex-1" onClick={() => setModo("visualizar")} disabled={carregando}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => setModo("visualizar")}
+            disabled={carregando}
+          >
             Cancelar
           </Button>
-          <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleConfirmarExclusao} disabled={carregando}>
+          <Button
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            onClick={handleConfirmarExclusao}
+            disabled={carregando}
+          >
             {carregando ? "Excluindo..." : "Confirmar exclusão"}
           </Button>
         </div>
@@ -376,13 +541,16 @@ export function VoluntarioDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-
         {/* Feedback de sucesso — sobrepõe o conteúdo */}
         {sucesso && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 rounded-lg gap-3">
             <CheckCircle2 size={48} className="text-green-500" />
             <p className="text-sm font-semibold text-gray-700">
-              {modo === "excluir" ? "Voluntário excluído." : "Alterações salvas."}
+              {modo === "excluir"
+                ? "Voluntário excluído."
+                : modo === "aprovar"
+                  ? "Voluntário aprovado!"
+                  : "Alterações salvas."}
             </p>
           </div>
         )}
@@ -396,7 +564,9 @@ export function VoluntarioDialog({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <DialogTitle className="text-base">{voluntario.nome}</DialogTitle>
+                <DialogTitle className="text-base">
+                  {voluntario.nome}
+                </DialogTitle>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   <Badge
                     variant="outline"
@@ -424,7 +594,16 @@ export function VoluntarioDialog({
 
             {/* Botões de ação — só no modo visualizar */}
             {modo === "visualizar" && (
-              <div className="flex gap-1 mt-1 flex-shrink-0">
+              <div className="flex gap-1 mt-1 shrink-0">
+                {!voluntario.aprovado && (
+                  <button
+                    title="Aprovar voluntário"
+                    onClick={() => setModo("aprovar")}
+                    className="p-1.5 rounded-md text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                  >
+                    <UserCheck size={15} />
+                  </button>
+                )}
                 <button
                   title="Editar voluntário"
                   onClick={() => setModo("editar")}
@@ -448,6 +627,8 @@ export function VoluntarioDialog({
             <p className="text-xs font-semibold mt-3">
               {modo === "editar" ? (
                 <span className="text-yellow-700">✏️ Modo edição</span>
+              ) : modo === "aprovar" ? (
+                <span className="text-green-700">✅ Aprovar voluntário</span>
               ) : (
                 <span className="text-red-600">🗑️ Confirmar exclusão</span>
               )}
@@ -457,6 +638,7 @@ export function VoluntarioDialog({
 
         {modo === "visualizar" && renderVisualizar()}
         {modo === "editar" && renderEditar()}
+        {modo === "aprovar" && renderAprovar()}
         {modo === "excluir" && renderExcluir()}
       </DialogContent>
     </Dialog>

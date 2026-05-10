@@ -10,7 +10,7 @@ interface StepContatoProps {
   contato: FormData["contato"];
   nomeDoador: string;
   onChange: (campo: keyof FormData["contato"], valor: string | boolean) => void;
-  onEnviar: () => void;
+  onEnviar: () => Promise<{ ok: boolean; erro?: string }>;
   onVoltar: () => void;
 }
 
@@ -32,16 +32,19 @@ export function StepContato({
   const router = useRouter();
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [erroEnvio, setErroEnvio] = useState("");
 
   const celularValido = contato.celular.replace(/\D/g, "").length === 11;
 
   async function handleEnviar() {
     setEnviando(true);
-    // TODO: substituir pelo POST /api/doacoes com os dados do formulário
-    // Simula latência de rede
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    onEnviar(); // notifica o orquestrador (para reset de estado futuro)
+    setErroEnvio("");
+    const resultado = await onEnviar();
     setEnviando(false);
+    if (!resultado.ok) {
+      setErroEnvio(resultado.erro ?? "Erro ao registrar doação. Tente novamente.");
+      return;
+    }
     setEnviado(true);
   }
 
@@ -116,6 +119,12 @@ export function StepContato({
           </label>
         </div>
       </div>
+
+      {erroEnvio && (
+        <p className="text-xs text-red-600 bg-red-50 rounded-md px-3 py-2 border border-red-100">
+          {erroEnvio}
+        </p>
+      )}
 
       <div className="flex gap-2 mt-2">
         <Button variant="outline" onClick={onVoltar} disabled={enviando}>

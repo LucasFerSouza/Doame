@@ -1,113 +1,168 @@
 # Arquitetura do Sistema Doame
 
+> **Versão:** 2.0 — Atualizado em 10/05/2026
+
+---
+
 ## 1. Visão Geral da Arquitetura
 
 A arquitetura do Doame foi concebida para atender a três princípios centrais:
 
 1. **Simplicidade operacional no MVP**, evitando complexidade desnecessária
-2. **Escalabilidade horizontal**, preparada para crescimento rápido em número de cidades, igrejas e doações
+2. **Escalabilidade horizontal**, preparada para crescimento em número de cidades, igrejas e doações
 3. **Separação clara de responsabilidades**, alinhada às boas práticas da Engenharia de Software
 
-O Doame adota uma **arquitetura em camadas**, com forte orientação a serviços, podendo evoluir naturalmente para uma arquitetura mais distribuída conforme a maturidade do produto.
+O Doame adota uma **arquitetura monolítica modular** organizada em monorepo, com forte orientação a serviços, podendo evoluir naturalmente para uma arquitetura mais distribuída conforme a maturidade do produto.
 
 ---
 
-## 2. Visão Macro (Logical View)
+## 2. Estrutura do Monorepo
 
-O sistema é composto pelos seguintes grandes blocos:
-
-- **Frontend Web**
-- **Backend de Aplicação (API)**
-- **Serviços de Integração Externa**
-- **Banco de Dados**
-- **Serviços de Observabilidade e Suporte**
+O projeto utiliza **Turborepo + pnpm workspaces** com a seguinte organização:
 
 ```
-[ Navegador ]
-      |
-      v
-[ Frontend Web ]
-      |
-      v
+doame/
+  apps/
+    web/          ← Next.js 15 (React 19) — Frontend
+    api/          ← NestJS 10 + Prisma — Backend
+  packages/
+    shared/       ← Tipos e enums TypeScript compartilhados
+  package.json    ← Scripts raiz (pnpm dev, build, lint, db:*)
+  turbo.json      ← Pipeline de build com cache
+  pnpm-workspace.yaml
+```
+
+O pacote `@doame/shared` é a **fonte única de verdade** para tipos compartilhados entre frontend e backend (enums de status, categorias, papéis, wrappers de resposta).
+
+---
+
+## 3. Visão Macro (Diagrama de Blocos)
+
+```
+[ Navegador do Usuário ]
+         |
+         v
+[ Frontend Web — Next.js :3000 ]
+         |
+         |── GET/POST /api/*
+         v
+[ API Doame — NestJS :3001 ]
+         |
+         |── Prisma ORM
+         |       v
+         |   [ PostgreSQL — doamedb ]
+         |
+         |── fetch (server-side)
+         v
+[ ViaCEP — viacep.com.br ]  ← consulta de CEP (passthrough)
+```
+
+Serviços futuros (pós-MVP):
+- `[ WhatsApp / SMS ]` — notificações para voluntários
+- `[ OpenStreetMap / Nominatim ]` — geocodificação de endereços
+- `[ PostGIS ]` — cálculos de proximidade geográfica
+
+---
+
+## 4. Arquitetura do Frontend (`apps/web`)
+
+### 4.1 Tecnologia
+
+- **Next.js 15** com App Router (React 19)
+- **TypeScript** com strict mode
+- **Tailwind CSS 4** para estilização
+- **shadcn/ui** para componentes de UI (primitivos acessíveis e consistentes)
+- **Framer Motion** para animações de transição entre passos do formulário
+
+### 4.2 Organização por Route Groups
+
+A separação de áreas é feita via **Next.js Route Groups** (convenção de parênteses):
+
+| Route Group | Caminho | Acesso | Descrição |
+|-------------|---------|--------|-----------|
+| `(main)` | `/donation` | Público | Formulário de doação multi-step |
+| `(marketing)` | `/about` | Público | Página institucional da ASA |
+| `(restricted)` | `/login`, `/admin` | Autenticado | Dashboard administrativo |
+
+### 4.3 Estrutura de Componentes
+
+- **Componentes globais:** `src/components/ui/` (shadcn/ui)
+- **Componentes por rota:** `_components/` co-localizado em cada segmento (underscore = não vira rota)
+- **Hooks reutilizáveis:** `src/hooks/` (ex: `useCep.ts`)
+
+### 4.4 Camadas Internas
+
+```
+[ Apresentação (UI) ]
+    ↕ props / callbacks
+[ Estado (page.tsx orquestrador) ]
+    ↕ fetch / hooks
+[ Serviços (API calls + hooks) ]
+    ↕ HTTP
 [ API Doame ]
-      |
-      +--> [ Banco de Dados ]
-      +--> [ Serviço WhatsApp ]
-      +--> [ Serviço de Autenticação ]
-      +--> [ Serviço de Logs e Erros ]
 ```
 
----
+O `page.tsx` de cada rota complexa (formulário de doação, dashboard admin) centraliza **todo o estado** — componentes filhos são stateless e recebem apenas props + callbacks.
 
-## 3. Arquitetura de Frontend
+### 4.5 Autenticação no Frontend
 
-### 3.1 Responsabilidades
+- Login: `POST /api/auth/login` com `{ email, senha }` → armazena `access_token` em `localStorage` como `doame_admin_token`
+- Flag de sessão: `doame_admin_logado` em `localStorage`
+- Guarda de rotas: `useEffect` no `page.tsx` do admin que redireciona para `/login` se não houver flag
 
-O Frontend é responsável por:
+### 4.6 Hook `useCep`
 
-- Exibição da landing page institucional
-- Execução do formulário "One Question at a Time"
-- Experiência de uso fluida para doadores
-- Interfaces autenticadas para voluntários e administradores
-- Consumo da API do Doame
+Localizado em `doame/apps/web/src/hooks/useCep.ts`. Responsabilidades:
+- Aplicar máscara `XXXXX-XXX` ao campo CEP
+- Disparar `GET /api/cep/:cep` automaticamente ao completar 8 dígitos
+- Gerenciar estados `carregando` e `erro`
+- Chamar callback `onPreenchido(dados)` com `{ logradouro, bairro, municipio, estado, complemento }`
 
-### 3.2 Características Técnicas
-
-- Aplicação **Web Responsiva**
-- Sem dependência de instalação
-- Separação clara entre áreas públicas e áreas autenticadas
-- Tratamento mínimo de lógica de negócio (regra sempre no backend)
-
-### 3.3 Camadas Internas do Frontend
-
-- Camada de Apresentação (UI)
-- Camada de Estado (fluxo do formulário, autenticação)
-- Camada de Serviços (integração com API)
+Utilizado em: `StepEndereco.tsx` (formulário de doação) e `NovoVoluntarioDialog.tsx` (cadastro de voluntário).
 
 ---
 
-## 4. Arquitetura de Backend
+## 5. Arquitetura do Backend (`apps/api`)
 
-### 4.1 API Central
+### 5.1 Tecnologia
 
-O backend é o núcleo do Doame e expõe uma **API RESTful** responsável por toda a lógica de negócio.
+- **NestJS 10** com TypeScript
+- **Prisma 5** como ORM
+- **PostgreSQL** como banco de dados
+- **JWT** via `@nestjs/jwt` + `@nestjs/passport` para autenticação
+- **class-validator** + **class-transformer** para validação global de DTOs
 
-#### Principais responsabilidades:
+### 5.2 Módulos de Domínio
 
-- Gerenciamento de doações
-- Gerenciamento de voluntários
-- Gerenciamento de administradores e superadmin
-- Regras de estados da doação
-- Sugestão automática de voluntários
-- Controle de permissões
-- Anonimização de dados
+Cada módulo segue o padrão `module / controller / service / dto`:
 
-### 4.2 Organização Interna (Camadas)
+| Módulo | Endpoints principais | Proteção | Responsabilidade |
+|--------|---------------------|----------|-----------------|
+| `AuthModule` | `POST /api/auth/login` | Público | Valida credenciais, emite JWT |
+| `DoacoesModule` | `GET/POST /api/doacoes`, `PATCH /:id/status`, `POST /:id/atribuir`, `GET /:id/voluntarios-sugeridos` | Misto¹ | CRUD de doações, lógica de atribuição, anonimização LGPD |
+| `VoluntariosModule` | `GET/POST /api/voluntarios`, `PATCH/DELETE /:id` | Misto² | CRUD de voluntários (sem senha), confirmação por senhaAdmin |
+| `AdministradoresModule` | `GET/POST /api/administradores` | JWT | CRUD de admins |
+| `PalavrasChaveModule` | `GET /api/palavras-chave`, `GET /api/palavras-chave/disponivel` | JWT | Sorteio de termo bíblico disponível |
+| `CepModule` | `GET /api/cep/:cep` | Público | Proxy para ViaCEP, centraliza CORS e permite cache futuro |
+| `PrismaModule` | — | Global | Singleton do PrismaClient injetado em todos os módulos |
 
-- **Controller**: Recebe requisições HTTP
-- **Service**: Contém regras de negócio
-- **Domain / Entity**: Modelos do sistema
-- **Repository**: Acesso a dados
-- **Integration**: Comunicação com serviços externos
+¹ `POST /api/doacoes` é público (doador não tem login); demais rotas exigem JWT.  
+² `POST /api/voluntarios` exige JWT (admin); `PATCH/DELETE` exige JWT + `senhaAdmin` no body.
 
-Essa separação garante **manutenibilidade e testabilidade**.
+### 5.3 Validação Global
 
----
+Configurada em `main.ts` via `ValidationPipe`:
+- `whitelist: true` — campos não declarados no DTO são removidos
+- `forbidNonWhitelisted: true` — retorna erro se campos desconhecidos forem enviados
+- `transform: true` — converte tipos automaticamente (ex: string → number)
 
-## 5. Modelo de Domínio (Visão Conceitual)
+### 5.4 Segurança
 
-Entidades principais:
-
-- Doador (temporário)
-- Doação
-- Voluntário
-- Administrador
-- Igreja
-- Distrito
-- Região Geográfica
-- Associação Voluntário–Doação
-
-As relações são explicitamente controladas para permitir rastreabilidade operacional sem violar LGPD.
+- CORS: `origin: FRONTEND_URL || 'http://localhost:3000'` em `main.ts`
+- Rotas protegidas: `@UseGuards(JwtAuthGuard)` por decorador individual
+- Senhas: hash bcrypt com salt 10
+- Editar/excluir voluntário: exige `senhaAdmin` no body, validado no backend via `AuthService.verificarSenha()`
+- Soft delete: voluntários são desativados (`ativo: false`), nunca deletados — preserva histórico de atribuições
 
 ---
 
@@ -115,83 +170,99 @@ As relações são explicitamente controladas para permitir rastreabilidade oper
 
 ### 6.1 Estratégia
 
-- Banco de dados relacional como fonte de verdade
-- Uso de geolocalização para cálculos de proximidade
-- Anonimização lógica após conclusão da coleta
+- PostgreSQL como fonte de verdade
+- Schema gerenciado pelo Prisma com migrações versionadas
+- Seed reproduzível via `pnpm db:seed` (idempotente com `upsert`)
+- Nome do banco em desenvolvimento: `doamedb`
 
 ### 6.2 Características
 
-- Integridade referencial
-- Histórico operacional sem dados pessoais
-- Preparado para consultas analíticas
+- Integridade referencial com cascade delete em itens de doação
+- Anonimização lógica (campos → null) ao invés de deleção física
+- Campos geográficos opcionais preparados para PostGIS futuro
+- Palavras-chave bíblicas com controle de disponibilidade (`emUso`) evitando duplicação
 
 ---
 
 ## 7. Serviços de Integração
 
-### 7.1 WhatsApp
+### 7.1 ViaCEP (ativo no MVP)
 
-- Envio de mensagens automáticas:
-  - Confirmação de coleta
-  - Aviso de deslocamento do voluntário
-  - Confirmação final
+- **Endpoint:** `https://viacep.com.br/ws/{cep}/json/`
+- **Uso:** preenchimento automático de endereço nos formulários de doação e de cadastro de voluntário
+- **Arquitetura:** o frontend chama `/api/cep/:cep` no backend, que repassa para a ViaCEP. Isso evita CORS no browser e centraliza tratamento de erros
+- **Resposta normalizada:** `{ cep, logradouro, complemento, bairro, municipio, estado }`
 
-A lógica de disparo reside exclusivamente no backend.
+### 7.2 WhatsApp / SMS (pós-MVP)
 
-### 7.2 Autenticação
+- Envio de notificação ao voluntário com a palavra-passe bíblica
+- Envio de confirmação ao doador
+- A lógica de disparo residirá exclusivamente no backend
 
-- Login por e-mail e senha (voluntários e admins)
-- Controle de papéis (roles)
+### 7.3 OpenStreetMap + Nominatim (pós-MVP)
+
+- Geocodificação de endereços (textual → lat/long) para cálculo de proximidade
+- Visualização de mapa no painel split-view de atribuição
 
 ---
 
-## 8. Estados da Doação (State Machine)
+## 8. Máquina de Estados da Doação
 
-Estados possíveis:
+O status da doação evolui conforme as ações do administrador:
 
-- Em Espera
-- Em Trânsito
-- Concluída
+```
+PENDENTE ──────────────────────────────── NEGADO
+    │                                       ↑
+    │ (atribuir voluntário)                 │ (a qualquer momento)
+    ▼                                       │
+AGUARDANDO ────────────────────────────────┤
+    │                                       │
+    │ (voluntário confirma)                 │
+    ▼                                       │
+CONFIRMADO ────────────────────────────────┤
+    │                                       │
+    │ (voluntário a caminho)                │
+    ▼                                       │
+ATRIBUIDO ─────────────────────────────────┤
+    │
+    │ (coleta realizada)
+    ▼
+COLETADO
+    │
+    │ (entrega confirmada + anonimização LGPD)
+    ▼
+ENTREGUE
+```
 
-As transições são controladas exclusivamente pela API, garantindo consistência.
+Transições controladas exclusivamente pelo endpoint `PATCH /api/doacoes/:id/status`.
 
 ---
 
 ## 9. Observabilidade e Confiabilidade
 
-### 9.1 Logs
+### 9.1 Erros de CEP
 
-- Registro de erros e eventos críticos
-- Consolidação periódica para superadmin
+- CEP inválido (< 8 dígitos): retorna `400 Bad Request` com mensagem `"CEP deve ter 8 dígitos"`
+- CEP não encontrado no ViaCEP: retorna `400 Bad Request` com `"CEP não encontrado"`
+- Falha na ViaCEP: retorna `400 Bad Request` com `"Erro ao consultar o serviço de CEP"`
 
 ### 9.2 Tolerância a Falhas
 
+- Falhas no serviço de CEP não bloqueiam o formulário — usuário pode preencher manualmente
 - Falhas externas não interrompem o fluxo principal
-- Erros são registrados e tratados posteriormente
 
 ---
 
-## 10. Segurança
+## 10. Evolução da Arquitetura
 
-- HTTPS obrigatório
-- Validação de dados no backend
-- Controle de acesso por perfil
-- Princípio do menor privilégio
+A arquitetura atual permite as seguintes evoluções sem redesenho:
 
----
-
-## 11. Evolução da Arquitetura
-
-A arquitetura atual permite evoluções como:
-
-- Separação em microserviços
-- Inclusão de filas (mensageria)
-- Cache distribuído
-- Dashboards analíticos avançados
-
----
-
-## 12. Conclusão
-
-A arquitetura do Doame foi desenhada para ser **robusta, ética, escalável e alinhada à missão institucional da ASA**, equilibrando responsabilidade social, eficiência operacional e boas práticas de Engenharia de Software.
-
+| Evolução | O que muda |
+|----------|-----------|
+| Mapa interativo no split-view | Substituir lista de voluntários por componente `react-leaflet` no painel direito |
+| Geocodificação de endereços | Preencher `latitude/longitude` em Doacao e Voluntario via Nominatim |
+| Cálculo de proximidade | Adicionar extensão PostGIS ao PostgreSQL; atualizar `voluntariosSugeridos` no service |
+| Autenticação de voluntários | `senhaHash` já está no schema (nullable); criar `VoluntarioModule` de auth separado |
+| Envio de mensagens | Adicionar `MessagingModule` com integração Twilio ou Evolution API |
+| Múltiplas igrejas | Estrutura multi-tenant já suportada pelo `igrejaId` em todas as entidades |
+| Separação em microserviços | CepModule, MessagingModule e DoacoesModule são naturalmente isoláveis |

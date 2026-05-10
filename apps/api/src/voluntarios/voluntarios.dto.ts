@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsBoolean, MinLength } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsBoolean, IsNumber } from 'class-validator';
 
 export class CreateVoluntarioDto {
   @IsString()
@@ -6,10 +6,6 @@ export class CreateVoluntarioDto {
 
   @IsEmail()
   email: string;
-
-  @IsString()
-  @MinLength(6)
-  senha: string;
 
   @IsString()
   telefone: string;
@@ -22,9 +18,11 @@ export class CreateVoluntarioDto {
   endereco: string;
 
   @IsOptional()
+  @IsNumber()
   latitude?: number;
 
   @IsOptional()
+  @IsNumber()
   longitude?: number;
 
   @IsString()

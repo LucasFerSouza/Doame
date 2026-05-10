@@ -92,7 +92,7 @@ model Voluntario {
   id          String   @id @default(uuid())
   nome        String
   email       String   @unique
-  senhaHash   String
+  senhaHash   String?
   telefone    String
   whatsapp    String?
   endereco    String
@@ -119,8 +119,8 @@ model Doacao {
   telefoneDoador   String
   whatsappDoador   String?
   enderecoDoador   String
-  latitude         Float
-  longitude        Float
+  latitude         Float?
+  longitude        Float?
   dataColeta       DateTime
   horarioColeta    String
   status           StatusDoacao    @default(PENDENTE)

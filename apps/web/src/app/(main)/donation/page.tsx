@@ -5,6 +5,9 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+const IGREJA_ID = process.env.NEXT_PUBLIC_IGREJA_ID ?? "igreja-itapetininga-01";
+
 import {
   StepId,
   FormData,
@@ -76,6 +79,53 @@ export default function Donation() {
 
   const mostrarCarrinho: StepId[] = ["hub", "alimento", "agasalho", "dinheiro"];
 
+  const handleEnviar = async (): Promise<{ ok: boolean; erro?: string }> => {
+    const { nome, itens, dinheiro, dataColeta, horaColeta, endereco, contato } = formData;
+
+    const endPart1 = [endereco.logradouro, endereco.numero].filter(Boolean).join(", ");
+    const endPart2 = [
+      [endereco.bairro, endereco.municipio].filter(Boolean).join(", "),
+      endereco.estado,
+    ].filter(Boolean).join("/");
+    const enderecoDoador = [endPart1, endPart2].filter(Boolean).join(" — ");
+
+    const itensMapeados: Array<{ categoria: string; nome: string; quantidade: number }> =
+      itens.map((i) => ({
+        categoria: i.tipo === "alimento" ? "ALIMENTO" : "AGASALHO",
+        nome: i.nome,
+        quantidade: i.quantidade,
+      }));
+
+    if (dinheiro && Number(dinheiro) > 0) {
+      itensMapeados.push({ categoria: "FINANCEIRA", nome: "Doação em dinheiro", quantidade: Number(dinheiro) });
+    }
+
+    try {
+      const res = await fetch(`${API}/doacoes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nomeDoador: nome,
+          telefoneDoador: contato.celular,
+          whatsappDoador: contato.temWhatsapp ? contato.celular : undefined,
+          enderecoDoador,
+          dataColeta,
+          horarioColeta: horaColeta,
+          igrejaId: IGREJA_ID,
+          itens: itensMapeados,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg = Array.isArray(body?.message) ? body.message[0] : (body?.message ?? "Erro ao registrar doação.");
+        return { ok: false, erro: msg };
+      }
+      return { ok: true };
+    } catch {
+      return { ok: false, erro: "Não foi possível conectar ao servidor." };
+    }
+  };
+
   const renderStep = () => {
     switch (step) {
       case "nome":
@@ -95,6 +145,7 @@ export default function Donation() {
             dinheiro={formData.dinheiro}
             onEscolher={(d) => irPara(d)}
             onFinalizar={() => irPara("resumo")}
+            onVoltar={() => irPara("nome", -1)}
           />
         );
 
@@ -162,7 +213,16 @@ export default function Donation() {
           <StepEndereco
             endereco={formData.endereco}
             onChange={(campo, valor) =>
-              atualizar("endereco", { ...formData.endereco, [campo]: valor })
+              setFormData((prev) => ({
+                ...prev,
+                endereco: { ...prev.endereco, [campo]: valor },
+              }))
+            }
+            onPreencherEndereco={(cepData) =>
+              setFormData((prev) => ({
+                ...prev,
+                endereco: { ...prev.endereco, ...cepData },
+              }))
             }
             onNext={() => irPara("contato")}
             onVoltar={() => irPara("dataHora", -1)}
@@ -177,10 +237,7 @@ export default function Donation() {
             onChange={(campo, valor) =>
               atualizar("contato", { ...formData.contato, [campo]: valor })
             }
-            onEnviar={() => {
-              // TODO: substituir por POST /api/doacoes com formData completo
-              // O StepContato gerencia o estado enviado/confirmação internamente
-            }}
+            onEnviar={handleEnviar}
             onVoltar={() => irPara("endereco", -1)}
           />
         );

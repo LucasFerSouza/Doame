@@ -31,7 +31,7 @@ export function VoluntariosList({
   const filtrados = voluntarios.filter(
     (v) =>
       v.nome.toLowerCase().includes(busca.toLowerCase()) ||
-      v.endereco.bairro.toLowerCase().includes(busca.toLowerCase())
+      v.endereco.bairro.toLowerCase().includes(busca.toLowerCase()),
   );
 
   return (
@@ -51,15 +51,18 @@ export function VoluntariosList({
       </div>
 
       {/* Contador */}
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 dark:text-gray-500">
         {filtrados.length} voluntário{filtrados.length !== 1 ? "s" : ""}{" "}
         encontrado{filtrados.length !== 1 ? "s" : ""}
       </p>
 
       {/* Lista */}
       {filtrados.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <Users size={32} className="mx-auto mb-3 text-gray-200" />
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500">
+          <Users
+            size={32}
+            className="mx-auto mb-3 text-gray-200 dark:text-gray-700"
+          />
           <p className="text-sm">Nenhum voluntário encontrado.</p>
         </div>
       ) : (
@@ -67,14 +70,14 @@ export function VoluntariosList({
           {filtrados.map((v) => (
             <Card
               key={v.id}
-              className="cursor-pointer hover:border-yellow-300 hover:shadow-md transition-all duration-200"
+              className="cursor-pointer hover:border-yellow-300 dark:hover:border-yellow-700 hover:shadow-md transition-all duration-200 dark:bg-gray-800 dark:border-gray-700"
               onClick={() => onSelect(v)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   {/* Avatar */}
-                  <Avatar className="w-10 h-10 flex-shrink-0">
-                    <AvatarFallback className="bg-green-100 text-green-800 text-sm font-bold">
+                  <Avatar className="w-10 h-10 shrink-0">
+                    <AvatarFallback className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-sm font-bold">
                       {iniciais(v.nome)}
                     </AvatarFallback>
                   </Avatar>
@@ -82,7 +85,7 @@ export function VoluntariosList({
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <p className="font-semibold text-gray-800 text-sm">
+                      <p className="font-semibold text-gray-800 dark:text-gray-100 text-sm">
                         {v.nome}
                       </p>
                       <Badge
@@ -107,7 +110,7 @@ export function VoluntariosList({
                       </Badge>
                     </div>
 
-                    <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                    <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1">
                         <MapPin size={11} />
                         {v.endereco.bairro} · {v.endereco.municipio}

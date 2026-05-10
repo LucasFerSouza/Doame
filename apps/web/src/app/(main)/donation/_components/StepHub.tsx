@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { StepId, ItemCarrinho } from "./types";
-import { Wheat, Shirt, Banknote, CheckCircle } from "lucide-react";
+import { Wheat, Shirt, Banknote, CheckCircle, ChevronLeft } from "lucide-react";
 
 interface StepHubProps {
   nome: string;
@@ -8,6 +8,7 @@ interface StepHubProps {
   dinheiro: string;
   onEscolher: (destino: StepId) => void;
   onFinalizar: () => void;
+  onVoltar: () => void;
 }
 
 export function StepHub({
@@ -16,6 +17,7 @@ export function StepHub({
   dinheiro,
   onEscolher,
   onFinalizar,
+  onVoltar,
 }: StepHubProps) {
   const temAlgo = itens.length > 0 || !!dinheiro;
 
@@ -48,6 +50,13 @@ export function StepHub({
 
   return (
     <div className="flex flex-col gap-4">
+      <button
+        onClick={onVoltar}
+        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors w-fit -mt-1"
+      >
+        <ChevronLeft size={14} />
+        Voltar
+      </button>
       <p className="text-sm text-gray-500">
         O que você deseja doar, <span className="font-semibold text-gray-700">{nome}</span>?
       </p>

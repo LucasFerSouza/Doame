@@ -26,7 +26,7 @@ pnpm db:seed          # Seed DB with test data (admin + volunteer accounts)
 pnpm db:studio        # Open Prisma Studio UI
 ```
 
-Seed credentials: `admin@doame.com` / `doame2025`, `carlos.mendonca@...` / `voluntario123`.
+Seed credentials: `admin@doame.com` / `doame2025`. Volunteer accounts are created by admins only — volunteers have no login.
 
 ## Architecture
 
@@ -57,20 +57,21 @@ Next.js App Router with route groups:
 - `(restricted)/login/` — Authentication page
 - `(marketing)/about/` — Public information page
 
-UI components live in `src/components/ui/` (shadcn/ui primitives). Feature-specific components are co-located in `_components/` subfolders within each route segment.
+UI components live in `src/components/ui/` (shadcn/ui primitives). Feature-specific components are co-located in `_components/` subfolders within each route segment. Reusable hooks live in `src/hooks/` (e.g., `useCep.ts`).
 
-Path aliases (configured in `tsconfig.json`, `baseUrl: src`): `@/*`, `@/components/*`, `@/lib/*`, `@/hooks/*`, `@/types/*`, `@/config/*`, `@/data/*`.
+Path aliases (configured in `tsconfig.json`): `@/*`, `@/components/*`, `@/lib/*`, `@/hooks/*`, `@/types/*`, `@/config/*`, `@/data/*`.
 
-Environment variable: `NEXT_PUBLIC_API_URL` (copy from `.env.example`).
+Environment variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_IGREJA_ID` (copy from `.env.example`). `NEXT_PUBLIC_IGREJA_ID` must match the church ID seeded in the database (`igreja-itapetininga-01`).
 
 ### Backend (`apps/api`)
 
 NestJS with feature modules — each domain has its own `module/controller/service/dto` set:
 - `AuthModule` — JWT login (`POST /api/auth/login`), Passport strategy, `JwtAuthGuard`
 - `DoacoesModule` — Donation CRUD, volunteer suggestion by geolocation, assignment logic
-- `VoluntariosModule` — Volunteer CRUD + approval workflow
+- `VoluntariosModule` — Volunteer CRUD + approval workflow (no password — admin registers volunteers)
 - `AdministradoresModule` — Admin CRUD (ADMIN / SUPERADMIN roles)
 - `PalavrasChaveModule` — Biblical keywords linked to donations
+- `CepModule` — Public proxy to ViaCEP (`GET /api/cep/:cep`), returns structured address; centralizes CORS handling
 - `PrismaModule` — Singleton DB connection injected across modules
 
 Global setup in `main.ts`: CORS (from `FRONTEND_URL` env), `ValidationPipe`, API prefix `/api`.
@@ -79,10 +80,17 @@ Environment variables: `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `PORT`, `
 
 ### Data Model (Prisma)
 
-Core entities: `Igreja` (church with geographic radius) → `Doacao` (donation with lat/long) + `ItemDoacao` / `DoacaoFinanceira` → `AtribuicaoVoluntarioDoacao` (volunteer assignment join table with distance and response status) → `Voluntario`.
+Core entities: `Igreja` (church with geographic radius) → `Doacao` (donation) + `ItemDoacao` / `DoacaoFinanceira` → `AtribuicaoVoluntarioDoacao` (volunteer assignment join table with distance and response status) → `Voluntario`.
 
-**Geographic matching**: Volunteer suggestions (`GET /api/doacoes/:id/voluntarios-sugeridos`) use lat/long distance calculations based on the church's configured sweep radius.
+Key schema decisions:
+- `Voluntario.senhaHash` is **nullable** — volunteers are registered by admins and do not log in to the system
+- `Doacao.latitude` and `Doacao.longitude` are **nullable** — the donation form does not capture geolocation; reserved for future map integration
+- Address data is stored as a formatted string: `"Logradouro, N — Bairro, Cidade/UF"` in both `enderecoDoador` and `Voluntario.endereco`
+
+**CEP lookup**: `GET /api/cep/:cep` proxies ViaCEP and returns `{ logradouro, bairro, municipio, estado, complemento }`. The hook `useCep` (in `apps/web/src/hooks/useCep.ts`) triggers the lookup automatically when the CEP field reaches 8 digits and fills the address fields.
+
+**Geographic matching**: Volunteer suggestions (`GET /api/doacoes/:id/voluntarios-sugeridos`) currently use text-based scoring (same bairro = 2pts, same município = 1pt). PostGIS-based matching is planned for post-MVP.
 
 **LGPD compliance**: Donor personal info is anonymized when a donation reaches status `ENTREGUE`.
 
-After any schema change run `pnpm db:generate` to regenerate the Prisma Client, then `pnpm db:migrate` to apply migrations.
+After any schema change run `pnpm db:generate` to regenerate the Prisma Client, then `pnpm db:migrate` (or `pnpm db:push` for dev-only changes without a migration file) to apply changes.

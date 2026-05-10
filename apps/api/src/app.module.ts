@@ -5,6 +5,7 @@ import { DoacoesModule } from './doacoes/doacoes.module';
 import { VoluntariosModule } from './voluntarios/voluntarios.module';
 import { AdministradoresModule } from './administradores/administradores.module';
 import { PalavrasChaveModule } from './palavras-chave/palavras-chave.module';
+import { CepModule } from './cep/cep.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { PalavrasChaveModule } from './palavras-chave/palavras-chave.module';
     VoluntariosModule,
     AdministradoresModule,
     PalavrasChaveModule,
+    CepModule,
   ],
 })
 export class AppModule {}

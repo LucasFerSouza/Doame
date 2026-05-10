@@ -30,11 +30,13 @@ export class CreateDoacaoDto {
   @IsString()
   enderecoDoador: string;
 
+  @IsOptional()
   @IsNumber()
-  latitude: number;
+  latitude?: number;
 
+  @IsOptional()
   @IsNumber()
-  longitude: number;
+  longitude?: number;
 
   @IsDateString()
   dataColeta: string;

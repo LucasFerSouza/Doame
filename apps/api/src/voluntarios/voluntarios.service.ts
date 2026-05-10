@@ -4,7 +4,6 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
 import { CreateVoluntarioDto, UpdateVoluntarioDto, ConfirmacaoAdminDto } from './voluntarios.dto';
-import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class VoluntariosService {
@@ -51,14 +50,11 @@ async create(dto: CreateVoluntarioDto) {
   });
   if (existe) throw new BadRequestException('E-mail já cadastrado');
 
-  const senhaHash = await bcrypt.hash(dto.senha, 10);
-
-  const { senha, igrejaId, ...dados } = dto;
+  const { igrejaId, ...dados } = dto;
 
   return this.prisma.voluntario.create({
-    data: { 
+    data: {
       ...dados,
-      senhaHash,
       aprovado: false,
       igreja: {
         connect: { id: igrejaId }
