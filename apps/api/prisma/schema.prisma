@@ -1,0 +1,214 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// schema.prisma — Modelo de dados do Doame
+// Baseado na documentação: Modelo de Dados v2.0
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum PapelAdmin {
+  ADMIN
+  SUPERADMIN
+}
+
+enum CategoriaDoacao {
+  ALIMENTO
+  AGASALHO
+  FINANCEIRA
+}
+
+enum StatusDoacao {
+  PENDENTE
+  AGUARDANDO
+  CONFIRMADO
+  NEGADO
+  ATRIBUIDO
+  COLETADO
+  ENTREGUE
+}
+
+enum StatusAtribuicao {
+  PENDENTE
+  ACEITA
+  RECUSADA
+  EXPIRADA
+}
+
+enum TipoPagamento {
+  PIX
+  DINHEIRO
+}
+
+// ─── Igreja ───────────────────────────────────────────────────────────────────
+
+model Igreja {
+  id                   String        @id @default(uuid())
+  nome                 String
+  endereco             String
+  cidade               String
+  estado               String
+  latitude             Float
+  longitude            Float
+  raioMetropolitanoKm  Float         @default(20)
+  ativa                Boolean       @default(true)
+  criadaEm             DateTime      @default(now())
+
+  administradores      Administrador[]
+  voluntarios          Voluntario[]
+  doacoes              Doacao[]
+  regioes              RegiaoGeografica[]
+
+  @@map("igrejas")
+}
+
+// ─── Administrador ────────────────────────────────────────────────────────────
+
+model Administrador {
+  id         String     @id @default(uuid())
+  nome       String
+  email      String     @unique
+  senhaHash  String
+  papel      PapelAdmin @default(ADMIN)
+  ativo      Boolean    @default(true)
+  criadoEm  DateTime   @default(now())
+
+  igrejaId   String
+  igreja     Igreja     @relation(fields: [igrejaId], references: [id])
+
+  @@map("administradores")
+}
+
+// ─── Voluntario ───────────────────────────────────────────────────────────────
+
+model Voluntario {
+  id          String   @id @default(uuid())
+  nome        String
+  email       String   @unique
+  senhaHash   String
+  telefone    String
+  whatsapp    String?
+  endereco    String
+  latitude    Float?
+  longitude   Float?
+  aprovado    Boolean  @default(false)
+  ativo       Boolean  @default(true)
+  disponivel  Boolean  @default(true)
+  criadoEm   DateTime @default(now())
+
+  igrejaId    String
+  igreja      Igreja   @relation(fields: [igrejaId], references: [id])
+
+  atribuicoes AtribuicaoVoluntarioDoacao[]
+
+  @@map("voluntarios")
+}
+
+// ─── Doacao ───────────────────────────────────────────────────────────────────
+
+model Doacao {
+  id               String          @id @default(uuid())
+  nomeDoador       String
+  telefoneDoador   String
+  whatsappDoador   String?
+  enderecoDoador   String
+  latitude         Float
+  longitude        Float
+  dataColeta       DateTime
+  horarioColeta    String
+  status           StatusDoacao    @default(PENDENTE)
+  anonimizacaoEm   DateTime?
+  criadaEm         DateTime        @default(now())
+
+  igrejaId         String
+  igreja           Igreja          @relation(fields: [igrejaId], references: [id])
+
+  palavraChaveId   String?
+  palavraChave     PalavraChave?   @relation(fields: [palavraChaveId], references: [id])
+
+  itens            ItemDoacao[]
+  atribuicoes      AtribuicaoVoluntarioDoacao[]
+  doacaoFinanceira DoacaoFinanceira?
+
+  @@map("doacoes")
+}
+
+// ─── ItemDoacao ───────────────────────────────────────────────────────────────
+
+model ItemDoacao {
+  id         String          @id @default(uuid())
+  categoria  CategoriaDoacao
+  nome       String
+  quantidade Int
+
+  doacaoId   String
+  doacao     Doacao          @relation(fields: [doacaoId], references: [id], onDelete: Cascade)
+
+  @@map("itens_doacao")
+}
+
+// ─── DoacaoFinanceira ─────────────────────────────────────────────────────────
+
+model DoacaoFinanceira {
+  id       String        @id @default(uuid())
+  tipo     TipoPagamento
+  valor    Float
+
+  doacaoId String        @unique
+  doacao   Doacao        @relation(fields: [doacaoId], references: [id], onDelete: Cascade)
+
+  @@map("doacoes_financeiras")
+}
+
+// ─── AtribuicaoVoluntarioDoacao ───────────────────────────────────────────────
+
+model AtribuicaoVoluntarioDoacao {
+  id               String           @id @default(uuid())
+  status           StatusAtribuicao @default(PENDENTE)
+  raioVarreduraKm  Float
+  distanciaMetros  Float?
+  atribuidaEm      DateTime         @default(now())
+  respondidaEm     DateTime?
+
+  doacaoId         String
+  doacao           Doacao           @relation(fields: [doacaoId], references: [id])
+
+  voluntarioId     String
+  voluntario       Voluntario       @relation(fields: [voluntarioId], references: [id])
+
+  @@map("atribuicoes_voluntario_doacao")
+}
+
+// ─── PalavraChave ─────────────────────────────────────────────────────────────
+
+model PalavraChave {
+  id                String   @id @default(uuid())
+  termo             String   @unique
+  referenciaBiblica String
+  significado       String?
+  ativa             Boolean  @default(true)
+  emUso             Boolean  @default(false)
+
+  doacoes           Doacao[]
+
+  @@map("palavras_chave")
+}
+
+// ─── RegiaoGeografica ─────────────────────────────────────────────────────────
+
+model RegiaoGeografica {
+  id       String  @id @default(uuid())
+  nome     String
+
+  igrejaId String
+  igreja   Igreja  @relation(fields: [igrejaId], references: [id])
+
+  @@map("regioes_geograficas")
+}

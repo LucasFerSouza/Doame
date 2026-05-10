@@ -1,0 +1,24 @@
+{
+  "name": "doame",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "db:migrate": "turbo run db:migrate --filter=@doame/api",
+    "db:generate": "turbo run db:generate --filter=@doame/api",
+    "db:seed": "turbo run db:seed --filter=@doame/api",
+    "db:studio": "turbo run db:studio --filter=@doame/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
