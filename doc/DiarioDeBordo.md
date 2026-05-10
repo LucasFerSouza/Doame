@@ -14,6 +14,8 @@
    - [Sessão 5 — 30/04/2026](#sessão-5--30042026)
    - [Sessão 6 — 01/05/2026](#sessão-6--01052026)
    - [Sessão 7 — 02/05/2026](#sessão-7--02052026)
+   - [Sessão 8 — 10/05/2026](#sessão-8--10052026)
+   - [Sessão 9 — 10/05/2026](#sessão-9--10052026)
 4. [Consolidação das Decisões](#4-consolidação-das-decisões)
 5. [Estado Atual do Projeto](#5-estado-atual-do-projeto)
 6. [Pendências e Próximos Passos](#6-pendências-e-próximos-passos)
@@ -607,6 +609,87 @@ Quando `onChange(campo, valor)` é chamado múltiplas vezes rapidamente (como em
 
 ---
 
+### Sessão 9 — 10/05/2026
+
+#### 🧠 Contexto
+Continuação direta da Sessão 8, no mesmo dia. A sessão teve dois blocos distintos: (1) conclusão da integração frontend-backend para voluntários, com diagnóstico e correção de dados mockados sendo exibidos no lugar dos dados reais do banco; e (2) nova funcionalidade de aprovação de voluntários pelo administrador + planejamento estratégico do módulo de comunicação via WhatsApp para o pós-MVP imediato.
+
+#### 👤 O que foi solicitado
+
+1. **Diagnóstico e correção** do painel de voluntários exibindo apenas os 5 registros do `mockData.ts` em vez dos 8 registros reais do banco (confirmado via screenshot do pgAdmin)
+2. **Aprovação de voluntários**: permitir que o administrador mude o status de "Pendente" para "Aprovado", habilitando o voluntário para receber atribuições
+3. **Push para o GitHub** com todas as mudanças acumuladas nas sessões 8 e 9
+4. **Atualização do DiarioDeBordo** incorporando o roadmap de comunicação via WhatsApp (Evolution API) fornecido pelo desenvolvedor
+
+#### 🤖 O que foi feito
+
+**Parte 1 — Diagnóstico e correção da busca de voluntários:**
+
+A causa raiz foi identificada rapidamente: o estado `voluntarios` em `admin/page.tsx` era inicializado a partir de `voluntariosMock` e nunca existia um `useEffect` para buscar dados reais da API — ao contrário das doações, que já tinham essa integração. A função `parseEndereco` (que converte a string de endereço `"Logradouro, N — Bairro, Cidade/UF"` de volta para o objeto estruturado) estava definida inline dentro de `mapApiDoacao` e foi extraída para o escopo do módulo, permitindo seu reuso.
+
+Aproveitando a análise, também foi corrigida a guarda `data.length > 0` no `useEffect` das doações: a condição impedia a substituição dos mocks quando a API retornasse um array vazio — comportamento incorreto que só seria percebido em um banco sem doações.
+
+| Arquivo | O que mudou |
+|---------|-------------|
+| `doame/apps/web/src/app/(restricted)/admin/page.tsx` | `parseEndereco` extraída para escopo de módulo; nova função `mapApiVoluntario`; novo `useEffect` para `GET /api/voluntarios?igrejaId=...` com JWT; guarda `data.length > 0` removida do fetch de doações |
+| `doame/apps/web/src/app/(restricted)/admin/_components/mockData.ts` | `sugerirVoluntarios` passou a aceitar `voluntarios: Voluntario[]` como segundo parâmetro (com `voluntariosMock` como fallback padrão), desacoplando a função dos dados mockados |
+| `doame/apps/web/src/app/(restricted)/admin/_components/PainelAtribuicao.tsx` | Prop `voluntarios` (antes prefixada com `_` por estar sem uso) agora é passada para `sugerirVoluntarios`, garantindo que as sugestões reflitam os dados reais do banco |
+
+**Parte 2 — Feature de aprovação de voluntários:**
+
+O endpoint `PATCH /api/voluntarios/:id` já existia no backend e aceitava o campo `aprovado: boolean` no `UpdateVoluntarioDto`. A integração foi feita em duas frentes:
+
+(a) **Wiragem do handler de edição à API real**: `handleEditarVoluntario` em `admin/page.tsx` foi completamente reescrito para chamar `PATCH /api/voluntarios/:id` com JWT. O body é construído dinamicamente incluindo apenas os campos presentes em `dados` (os aceitos pelo `UpdateVoluntarioDto`): `nome`, `telefone`, `whatsapp`, `endereco`, `disponivel`, `aprovado`, `ativo` e `senhaAdmin`. O campo `email` não foi incluído pois não consta no DTO do backend. O estado local só é atualizado após confirmação do servidor.
+
+(b) **Novo modo "aprovar" no VoluntarioDialog**: um botão com ícone `UserCheck` foi adicionado ao header do dialog, visível apenas quando o voluntário está com `aprovado: false`. Ao clicar, entra no modo `"aprovar"` que exibe um painel verde informativo e campo de senha. Na confirmação, chama `onEditar` com `{ aprovado: true, disponivel: true }` — aprovação e disponibilidade são ativadas juntas, pois um voluntário recém-aprovado deve estar imediatamente elegível para atribuições. O campo `email` no modo editar foi tornado somente leitura (o backend não aceita sua edição).
+
+| Arquivo | O que mudou |
+|---------|-------------|
+| `doame/apps/web/src/app/(restricted)/admin/page.tsx` | `handleEditarVoluntario` reescrito para chamar `PATCH /api/voluntarios/:id` com JWT e construção dinâmica do body |
+| `doame/apps/web/src/app/(restricted)/admin/_components/VoluntarioDialog.tsx` | Tipo `Modo` ampliado com `"aprovar"`; botão `UserCheck` no header para voluntários pendentes; função `renderAprovar()` e `handleConfirmarAprovacao()`; campo email tornado read-only; mensagem de sucesso atualizada para o novo modo |
+
+#### 📌 Decisões tomadas
+
+- **Aprovação ativa disponibilidade**: ao aprovar um voluntário, `disponivel` também é definido como `true` — a aprovação implica prontidão para receber coletas
+- **Email imutável após cadastro**: o campo email não está no `UpdateVoluntarioDto` (decisão de design do backend); no frontend, o campo foi tornado somente leitura com indicação visual para evitar confusão
+- **Exclusão de voluntário ainda não integrada à API**: `handleExcluirVoluntario` permanece com validação local de senha (`doame2025`); será integrado ao `DELETE /api/voluntarios/:id` em sessão futura
+- **Sugestão de voluntários baseada em dados reais**: `sugerirVoluntarios` agora recebe a lista real buscada da API — as sugestões no Painel de Atribuição refletem o banco de dados
+
+#### 🗺️ Roadmap planejado — Módulo de Comunicação (Evolution API)
+
+O desenvolvedor definiu o próximo grande objetivo do projeto: integrar notificações automáticas via WhatsApp (ou SMS como fallback) usando a **Evolution API**, hospedada em container Docker. A escolha da Evolution API sobre alternativas como Twilio ou Z-API foi motivada pelo custo significativamente menor. A necessidade de containerizar a Evolution API abre a oportunidade de colocar toda a aplicação em produção via **Docker + Vercel** no mesmo momento.
+
+O roadmap foi estruturado em 5 fases, conforme definido em conjunto com o desenvolvedor:
+
+**Fase 1 — Infraestrutura Docker**
+- Criar `docker-compose.yaml` na raiz do projeto com: Evolution API, Redis (performance) e PostgreSQL
+- Definir variáveis de ambiente: `EVOLUTION_API_KEY`, porta de comunicação
+- Validar que o serviço responde via Dashboard/Swagger da Evolution API
+
+**Fase 2 — Pareamento do celular oficial**
+- Criar instância via requisição `POST` à Evolution API (nome sugerido: `DOAME_ADMIN`)
+- Gerar QR Code e realizar leitura com o celular oficial da ASA
+- Criar endpoint de health check para verificar se a instância permanece conectada (`status: "open"`)
+
+**Fase 3 — WhatsappModule no NestJS**
+- Criar módulo dedicado: `WhatsappModule` com `WhatsappService` e `WhatsappController`
+- Implementar `sendText(to: string, message: string)` via `HttpService` (Axios) para `POST` na Evolution API
+- Implementar `sendTemplate(to: string, type: 'DOACAO_CONFIRMADA' | 'BOAS_VINDAS' | 'COLETA_ATRIBUIDA')`
+- Tratamento de erros para celular offline; log de envios no console
+
+**Fase 4 — Integração com fluxos de negócio**
+- **Nova doação**: após gravação no banco, disparar mensagem automática ao doador com resumo e número de protocolo
+- **Notificação à administração**: celular oficial recebe alerta a cada nova doação registrada
+- **Atribuição de coleta**: ao atribuir voluntário, enviar mensagem ao voluntário com detalhes da coleta (endereço, data, horário, itens)
+- **Palavra-passe bíblica**: enviar a palavra separadamente ao voluntário e ao doador no momento da confirmação
+- Criar utilitário de formatação de mensagens (`MessageFormatter`) com emojis e quebras de linha
+
+**Fase 5 — Frontend e UX**
+- Adicionar checkbox de consentimento no formulário de doação: "Desejo receber atualizações via WhatsApp"
+- (Opcional) Toast de feedback após envio: "Um comprovante foi enviado para seu WhatsApp"
+
+---
+
 ## 4. Consolidação das Decisões
 
 ### Tecnologia
@@ -623,6 +706,9 @@ Quando `onChange(campo, valor)` é chamado múltiplas vezes rapidamente (como em
 | Monorepo | Turborepo + pnpm | Gerenciamento eficiente de múltiplos pacotes, cache de build, workspace nativo |
 | Mapa (pós-MVP) | OpenStreetMap + react-leaflet | Gratuito, open source, sem limites de requisição |
 | Geocodificação (pós-MVP) | Nominatim | API oficial do OSM, gratuita para uso moderado |
+| Notificações (pós-MVP imediato) | Evolution API (WhatsApp) + SMS como fallback | Custo significativamente menor que Twilio/Z-API; auto-hospedável em container Docker |
+| Containerização | Docker + docker-compose | Necessário para hospedar a Evolution API; oportunidade de unificar deploy de toda a aplicação |
+| Deploy | Vercel (frontend) + Docker (backend + Evolution API) | Aproveitamento da containerização já necessária para a Evolution API |
 | Testes externos | ngrok | Sem custo, sem configuração de servidor, tunnel seguro para exposição local |
 
 ### Arquitetura
@@ -658,15 +744,16 @@ Quando `onChange(campo, valor)` é chamado múltiplas vezes rapidamente (como em
 **Front-end:**
 - Landing page centralizada em mobile (`doame/apps/web/src/app/page.tsx`)
 - Formulário de doação multi-step com 7 passos + botão Voltar no StepHub (`doame/apps/web/src/app/(main)/donation/`)
-- Formulário de endereço com preenchimento automático via CEP (`StepEndereco.tsx`)
+- Formulário de endereço com preenchimento automático via CEP — sem stale closure, campos editáveis durante e após fetch (`StepEndereco.tsx`)
 - Envio real de doação: `StepContato.tsx` chama `POST /api/doacoes` com mapeamento completo do `FormData`
 - Redirecionamento para home após envio bem-sucedido
 - Página About (`doame/apps/web/src/app/(marketing)/about/page.tsx`)
 - Login real com JWT: `login/page.tsx` chama `POST /api/auth/login`, armazena token em `localStorage`
 - Dashboard administrativo com **dark mode** persistido (`doame/apps/web/src/app/(restricted)/admin/`):
   - Aba **Doações**: busca real via `GET /api/doacoes` com JWT; dialog de detalhes, mudança de status, atribuição
-  - Aba **Voluntários**: lista com busca, dialog visualizar/editar/excluir; botão **Novo Voluntário** com dialog de cadastro
-  - Aba **Atribuição**: painel split-view com lista filtrável e voluntários sugeridos por proximidade
+  - Aba **Voluntários**: busca real via `GET /api/voluntarios` com JWT; dialog visualizar/editar/excluir/**aprovar**; botão **Novo Voluntário** com cadastro real via `POST /api/voluntarios`; edição via `PATCH /api/voluntarios/:id`
+  - Aba **Atribuição**: painel split-view com sugestões baseadas em dados reais do banco
+- Aprovação de voluntários: botão "Aprovar" no dialog ativa `aprovado: true` e `disponivel: true` via API real
 - Cadastro de voluntário com endereço estruturado e preenchimento via CEP (`NovoVoluntarioDialog.tsx`)
 - Hook `useCep` reutilizável (`doame/apps/web/src/hooks/useCep.ts`)
 
@@ -684,14 +771,15 @@ Quando `onChange(campo, valor)` é chamado múltiplas vezes rapidamente (como em
 
 ### 🔄 Parcialmente concluído
 
-- **Integração front-back no dashboard**: doações são buscadas da API real. Voluntários, edição, exclusão e atribuição ainda usam `mockData.ts` e lógica local no frontend.
+- **Exclusão de voluntário**: `handleExcluirVoluntario` ainda valida a senha localmente (`doame2025`) e atualiza apenas o estado local — não chama `DELETE /api/voluntarios/:id`
+- **Sugestão de voluntários no Painel de Atribuição**: usa `sugerirVoluntarios()` local (agora com dados reais) em vez do endpoint `GET /api/doacoes/:id/voluntarios-sugeridos`
 
-### ❌ Não iniciado (MVP)
+### ❌ Não iniciado
 
-- Busca real de voluntários via `GET /api/voluntarios` no dashboard
-- Edição/exclusão de voluntário via `PATCH/DELETE /api/voluntarios/:id` com `senhaAdmin`
-- Atribuição via `POST /api/doacoes/:id/atribuir`
+- Atribuição real via `POST /api/doacoes/:id/atribuir`
 - Mudança de status via `PATCH /api/doacoes/:id/status`
+- Módulo de comunicação WhatsApp/SMS (Evolution API) — roadmap definido na Sessão 9
+- Containerização (Docker) e deploy (Vercel)
 
 ---
 
@@ -699,26 +787,50 @@ Quando `onChange(campo, valor)` é chamado múltiplas vezes rapidamente (como em
 
 ### Pendências abertas (MVP — integração restante)
 
-1. **Aba Voluntários — busca real**
-   - `GET /api/voluntarios?igrejaId=...` com JWT para substituir `voluntariosMock`
-
-2. **Aba Voluntários — edição e exclusão**
-   - `PATCH /api/voluntarios/:id` com `{ ...form, senhaAdmin }` no body
+1. **Exclusão de voluntário via API**
    - `DELETE /api/voluntarios/:id` com `{ senhaAdmin }` no body
+   - Atualmente: validação local de senha + remoção apenas do estado React
 
-3. **Painel de Atribuição**
-   - `GET /api/doacoes/:id/voluntarios-sugeridos` para substituir `sugerirVoluntarios()` do mockData
-   - `POST /api/doacoes/:id/atribuir` com `{ voluntarioId }` para atribuição real
+2. **Atribuição real**
+   - `POST /api/doacoes/:id/atribuir` com `{ voluntarioId }` para persistir no banco
 
-4. **Mudança de status no DoacaoDialog**
+3. **Mudança de status**
    - `PATCH /api/doacoes/:id/status` com `{ status }` para refletir mudanças no banco
 
-### Pendências futuras (pós-MVP)
+### Próximo grande objetivo — Módulo de Comunicação (Evolution API)
+
+O roadmap abaixo foi definido na Sessão 9 e representa a próxima fase de desenvolvimento após a conclusão das pendências de integração acima.
+
+**Fase 1 — Infraestrutura Docker**
+- `docker-compose.yaml` na raiz: Evolution API + Redis + PostgreSQL
+- Variáveis de ambiente: `EVOLUTION_API_KEY`, porta de comunicação
+
+**Fase 2 — Pareamento do celular oficial**
+- Criar instância `DOAME_ADMIN` via requisição `POST` à Evolution API
+- Geração de QR Code e leitura com celular da ASA
+- Endpoint de health check (`status: "open"`)
+
+**Fase 3 — WhatsappModule no NestJS**
+- `WhatsappModule` com `WhatsappService` e `WhatsappController`
+- Métodos: `sendText(to, message)` e `sendTemplate(to, type)`
+- Tratamento de erros para celular offline; logs de envio
+
+**Fase 4 — Integração com fluxos de negócio**
+- Mensagem automática ao doador na confirmação da doação
+- Alerta ao celular da administração a cada nova doação
+- Notificação ao voluntário na atribuição de coleta (endereço, data, horário, itens)
+- Palavra-passe bíblica enviada separadamente a voluntário e doador
+- Utilitário `MessageFormatter` para padronizar mensagens com emojis
+
+**Fase 5 — Frontend**
+- Checkbox de consentimento de WhatsApp no formulário de doação
+- (Opcional) Toast de feedback após envio: "Um comprovante foi enviado para seu WhatsApp"
+
+### Pendências futuras (pós-módulo de comunicação)
 
 - Substituir lista de voluntários no split-view por mapa interativo (`react-leaflet` + PostGIS)
 - Geocodificação de endereços via Nominatim (preencher `latitude/longitude` em Doacao e Voluntario)
 - Varredura automática de raios para sugestão de voluntários
-- Envio real de SMS/WhatsApp com palavra-passe bíblica na confirmação de coleta
 - Painel do voluntário (área autenticada separada, usando `senhaHash` já presente no schema)
 - Superadmin com gestão de múltiplas igrejas
 
@@ -775,4 +887,4 @@ Ao final de cada sessão (ou quando solicitado), o agente deve:
 ---
 
 *Diário de Bordo gerado em 01/05/2026 — Sessão 6*
-*Última atualização: 02/05/2026 — Sessão 7*
+*Última atualização: 10/05/2026 — Sessão 9*
