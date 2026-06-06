@@ -1,9 +1,0 @@
-Leia o arquivo "DiarioDeBordo.md" na pasta "doc" do repositório 
-(caminho: doame/doc/DiarioDeBordo.md) e retorne para mim uma 
-comprovação de que você está por dentro de tudo relativo ao projeto. 
-Depois me pergunte o que devemos fazer em seguida.
-
-
-
-
-Atualize o arquivo  "DiarioDeBordo.md" na pasta "doc" do repositório (caminho: doame/doc/DiarioDeBordo.md) conforme as suas regras com base em tudo que foi executado na data de hoje. Gere para mim apenas o arquivo especificado e não o diretorio completo zipado

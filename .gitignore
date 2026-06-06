@@ -31,3 +31,9 @@ pnpm-debug.log*
 .idea
 *.swp
 *.swo
+
+# Doc folder - apenas Acesso Admin.md é rastreado
+doc/*
+!doc/Acesso Admin.md
+
+CLAUDE.md
